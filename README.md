@@ -19,15 +19,19 @@ SBCV20は、電脳伝説さん（@vintagechips）が作成した、V20または8
 を楽しむことが出来ます。オレンジピコさんで、ボードが入手できます。
 
 入手先
+
 https://store.shopping.yahoo.co.jp/orangepicoshop/pico-a-037.html
 
 電脳伝説さんのページ
+
 https://vintagechips.wordpress.com/category/8088-v20/
 
 SBCV20技術資料はこちらです。
+
 http://www.amy.hi-ho.ne.jp/officetetsu/storage/sbcv20_techdata.pdf
 
 SBCV20データパックはこちらです。
+
 http://www.amy.hi-ho.ne.jp/officetetsu/storage/sbcv20_datapack.zip
 
 
@@ -40,6 +44,7 @@ Universal Monitorはasanoさんが作成したモニターで、まざまなプ�
 今回のSBCV20でも、8086バージョンのUniversal Monitorを動作させています。
 
 Universal Monitorの詳細は、こちらです。
+
 https://electrelic.com/electrelic/node/1317
 
 
@@ -52,8 +57,11 @@ https://electrelic.com/electrelic/node/1317
 https://vintagechips.wordpress.com/2015/12/06/%E8%B1%8A%E5%9B%9B%E5%AD%A3%E3%82%BF%E3%82%A4%E3%83%8B%E3%83%BCbasic%E7%A2%BA%E5%AE%9A%E7%89%88/
 
 今回は、「sugaのジャンク部屋」で公開されているソースコードを利用しました。
+
 http://www.ne.jp/asahi/suga/junkyard/sbc/sbcz8002/SBCZ8002-ttbasic.zip
+
 sugaのジャンク部屋
+
 http://www.ne.jp/asahi/suga/junkyard/sbc/sbcz8002/
 
 
@@ -81,6 +89,7 @@ GAME-86は、「たけおか ぼちぼち日記」さんがＣ言語で記述さ
 で動作するようにしました。
 
 ・「たけおか ぼちぼち日記」
+
 https://ameblo.jp/takeoka/entry-11004344172.html
 
 
