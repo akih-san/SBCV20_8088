@@ -1,0 +1,42 @@
+GAME-86 ファイルリスト
+
+1. gm88.c
+2. gm88.asm
+3. gm88_cnv.asm
+4. gm88_cnv.lst
+5. gm88_cnv.hex
+6. GMAE言語文法.txt
+7. gmae80_maze.txt
+8. LifeGameRnd.txt
+
+1. gm88.c 
+
+　　GAME-86インタプリタのＣ言語ソースファイル
+
+2. gm88.asm
+
+　　TUBO Cでコンパイルし、作成したアセンブルソースコード
+　　-Sオプションで8086ソースコードを生成
+
+3. gm88_cnv.asm
+
+　　gm88.asmをASマクロアセンブラでアセンブル出来るように改変した
+　　ソースコード。SBCV20上で動作出来るように、ハードウェア依存部を
+　　追加しています。このソースコードが最終形態となります。
+
+4. gm88_cnv.lst
+
+　　ASマクロアセンブラでアセンブルしたリスト
+　　
+5. gm88_cnv.hex
+
+　　p2hexツールで作成したインテルヘキサファイル
+
+6. GMAE言語文法.txt
+
+　　GAME言語の文法ドキュメント
+
+7. gmae80_maze.txt
+8. LifeGameRnd.txt
+
+　　GAMEのサンプルプログラム

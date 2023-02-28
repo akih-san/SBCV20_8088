@@ -1,0 +1,37 @@
+＜各インタプリタの起動方法＞
+
+各インタプリタは、unimonのGコマンドで直接起動します。
+
+・豊四季Tiny Basicの起動
+
+] G 8C00
+TOYOSHIKI TINY BASIC
+SBCV20/8088 EDITION
+OK
+>
+
+systemコマンドで、unimonに戻ります。
+
+] G 8C03
+>
+
+豊四季Tiny Basicをwarm bootします。
+Basicプログラムは、残ったままです。
+
+
+・GAME-86の起動
+
+] G A600
+GAME-86 SBCV20/8088 Edition
+
+*READY
+
+\<リターン>
+unimonに戻ります。
+
+] G A603
+
+*READY
+
+GAME-86をwarm bootします。
+GAMEプログラムは残ったままです。

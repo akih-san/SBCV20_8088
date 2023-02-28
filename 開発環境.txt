@@ -1,0 +1,32 @@
+＜開発環境＞
+
+開発は、Windows10, Windows11上で行っており、以下の開発環境を使用しています。
+
+・アセンブラ
+
+アセンブラは、Macro Assembler AS V1.42(http://john.ccac.rwth-aachen.de:8000/as/)を
+使用しています。
+ヘキサファイルの作成は、付属するp2hexコマンドを使用しています。
+
+・Ｃコンパイラ
+
+Embarcadero が公開しているアンティークソフトより、Turbo C 2.01 (1989/5/11)をダウンロード
+し、MS-DOS playerの環境下で動作させて使用しています。
+
+Embarcadero が公開しているアンティークソフトは、いつまで公開されているか不明ですが
+2023年2月末時点では公開されています。
+
+Turbo C 2.01 (1989/5/11)のダウンロード
+https://qiita.com/ht_deko/items/ae7605c6b1f426ae234a#%E3%82%A2%E3%83%BC%E3%82%AB%E3%82%A4%E3%83%96%E3%81%AB%E3%81%A4%E3%81%84%E3%81%A6-2
+
+
+MS-DOS playerは、TAKEDA, toshiyaさんが開発しています。
+
+TAKEDA, toshiyaさんのHP
+http://takeda-toshiya.my.coocan.jp/
+TAKEDA, toshiyaさんのブログ
+http://takeda-toshiya.seesaa.net/
+
+MS-DOS Player for Win32-x64 謎WIPページ
+http://takeda-toshiya.my.coocan.jp/msdos/
+

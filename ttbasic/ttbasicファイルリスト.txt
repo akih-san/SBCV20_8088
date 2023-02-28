@@ -1,0 +1,31 @@
+豊四季タイニーＢＡＳＩＣ ファイルリスト
+
+1. ttbasic.c
+2. ttbasic.asm
+3. ttbasic_cnv.asm
+4. ttbasic_cnv.lst
+5. ttbasic_cnv.hex
+
+1. ttbasic.c 
+
+　　豊四季タイニーＢＡＳＩＣのＣ言語ソースファイル
+
+2. ttbasic.asm
+
+　　TUBO Cでコンパイルし、作成したアセンブルソースコード
+　　-Sオプションで8086ソースコードを生成
+
+3. ttbasic_cnv.asm
+
+　　ttbasic.asmをASマクロアセンブラでアセンブル出来るように改変した
+　　ソースコード。SBCV20上で動作出来るように、ハードウェア依存部を
+　　追加しています。このソースコードが最終形態となります。
+
+4. ttbasic_cnv.lst
+
+　　ASマクロアセンブラでアセンブルしたリスト
+　　
+5. ttbasic_cnv.hex
+
+　　p2hexツールで作成したインテルヘキサファイル
+
