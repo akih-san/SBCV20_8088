@@ -23,8 +23,10 @@ https://store.shopping.yahoo.co.jp/orangepicoshop/pico-a-037.html
 
 電脳伝説さんのページ
 https://vintagechips.wordpress.com/category/8088-v20/
+
 SBCV20技術資料はこちらです。
 http://www.amy.hi-ho.ne.jp/officetetsu/storage/sbcv20_techdata.pdf
+
 SBCV20データパックはこちらです。
 http://www.amy.hi-ho.ne.jp/officetetsu/storage/sbcv20_datapack.zip
 
