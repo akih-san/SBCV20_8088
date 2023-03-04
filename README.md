@@ -112,9 +112,11 @@ T. Nakagawa氏のWebには、ＶＴＬの基本的なことや、インプリメ
 （これを動かしたくて、ＶＴＬをSBCV20で動かそうと思ったのですが（笑））
 
 ・「VTL(Very Tiny Language)の作成」
+
 http://middleriver.chagasi.com/electronics/vtl.html
 
 ・超ミニ言語で遊ぼう（４）みんなで「スタ☆トレ」
+
 https://ameblo.jp/siropyon/entry-11917965564.html
 
 
