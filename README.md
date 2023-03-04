@@ -46,7 +46,7 @@ https://electrelic.com/electrelic/node/1317<br>
 リファレンスは電脳伝説さん（@vintagechips）のページにあります。<br>
 詳細は電脳伝説さんのページをご覧ください。<br>
 <br>
-https://vintagechips.wordpress.com/2015/12/06/%E8%B1%8A%E5%9B%9B%E5%AD%A3%E3%82%BF%E3%82%A4%E3%83%8B%E3%83%BCbasic%E7%A2%BA%E5%AE%9A%E7%89%88/
+https://vintagechips.wordpress.com/2015/12/06/%E8%B1%8A%E5%9B%9B%E5%AD%A3%E3%82%BF%E3%82%A4%E3%83%8B%E3%83%BCbasic%E7%A2%BA%E5%AE%9A%E7%89%88/<br>
 <br>
 今回は、「sugaのジャンク部屋」で公開されているソースコードを利用しました。<br>
 http://www.ne.jp/asahi/suga/junkyard/sbc/sbcz8002/SBCZ8002-ttbasic.zip<br>
