@@ -14,15 +14,15 @@ DEBUG = 0
 
 DT_SEG		equ	0h
 RAM_END		equ	7fffh
-TB_STACK	equ	600h
+TB_STACK	equ	700h
 RND_BASE	equ	8000h
 RND_END		equ	8c00h
 
 	if DEBUG = 0
 TB_OFF		equ	8c00h
-TB_WORK		equ	600h
+TB_WORK		equ	TB_STACK
 	else
-TB_OFF		equ	600h
+TB_OFF		equ	TB_STACK
 TB_WORK		equ	2000h
 	endif
 

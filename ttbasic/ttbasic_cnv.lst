@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 227] - Source File ttbasic_cnv.asm - Page 1 - 2/28/2023 10:53:53
+ AS V1.42 Beta [Bld 227] - Source File ttbasic_cnv.asm - Page 1 - 3/4/2023 17:12:45
 
 
        1/       0 :                     	page 0
@@ -17,15 +17,15 @@
       14/       0 :                     
       15/       0 : =0H                  DT_SEG		equ	0h
       16/       0 : =7FFFH               RAM_END		equ	7fffh
-      17/       0 : =600H                TB_STACK	equ	600h
+      17/       0 : =700H                TB_STACK	equ	700h
       18/       0 : =8000H               RND_BASE	equ	8000h
       19/       0 : =8C00H               RND_END		equ	8c00h
       20/       0 :                     
       21/       0 : =>TRUE               	if DEBUG = 0
       22/       0 : =8C00H               TB_OFF		equ	8c00h
-      23/       0 : =600H                TB_WORK		equ	600h
+      23/       0 : =700H                TB_WORK		equ	TB_STACK
       24/       0 : =>FALSE              	else
-      25/       0 :                     TB_OFF		equ	600h
+      25/       0 :                     TB_OFF		equ	TB_STACK
       26/       0 :                     TB_WORK		equ	2000h
       27/       0 : [21]                 	endif
       28/       0 :                     
@@ -49,11 +49,11 @@
       46/    8C06 : B8 00 00            	mov	ax, DT_SEG
       47/    8C09 : 8E D8               	MOV	DS,AX
       48/    8C0B : 8E D0               	MOV	SS,AX
-      49/    8C0D : BC 00 06            	MOV	SP,TB_STACK
+      49/    8C0D : BC 00 07            	MOV	SP,TB_STACK
       50/    8C10 :                     
       51/    8C10 : 33 C0               	xor	ax, ax
-      52/    8C12 : BF 00 06            	mov	di, TB_WORK
-      53/    8C15 : B9 00 3D            	mov	cx, ((RAM_END+1) - TB_WORK)/2
+      52/    8C12 : BF 00 07            	mov	di, TB_WORK
+      53/    8C15 : B9 80 3C            	mov	cx, ((RAM_END+1) - TB_WORK)/2
       54/    8C18 :                     mem_clear:
       55/    8C18 : 89 05               	mov	[di], ax
       56/    8C1A : 47                  	inc	di
@@ -61,7 +61,7 @@
       58/    8C1C : E2 FA               	loop	mem_clear
       59/    8C1E :                     
       60/    8C1E : B8 00 80            	mov	ax, RND_BASE
-      61/    8C21 : A3 04 06            	mov	[s_val], ax	; set initial BASE value for SEED
+      61/    8C21 : A3 04 07            	mov	[s_val], ax	; set initial BASE value for SEED
       62/    8C24 : E8 A0 00            	call	_main
       63/    8C27 :                     ret_mon:
       64/    8C27 : B4 00               	mov	ah, 0
@@ -73,15 +73,15 @@
       70/    8C2B :                     update_seed:
       71/    8C2B : 50                  	push	ax
       72/    8C2C : 53                  	push	bx
-      73/    8C2D : 8B 1E 04 06         	mov	bx, [s_val]
+      73/    8C2D : 8B 1E 04 07         	mov	bx, [s_val]
       74/    8C31 : 8B 07               	mov	ax, [bx]
-      75/    8C33 : A3 02 06            	mov	[SEEDX], ax	; update SEED
+      75/    8C33 : A3 02 07            	mov	[SEEDX], ax	; update SEED
       76/    8C36 : 43                  	inc	bx
       77/    8C37 : 81 FB 00 8C         	cmp	bx, RND_END
       78/    8C3B : 75 03               	jne	w1
       79/    8C3D : BB 00 80            	mov	bx, RND_BASE
       80/    8C40 :                     w1:
-      81/    8C40 : 89 1E 04 06         	mov	[s_val], bx	; update base value
+      81/    8C40 : 89 1E 04 07         	mov	[s_val], bx	; update base value
       82/    8C44 : 5B                  	pop	bx
       83/    8C45 : 58                  	pop	ax
       84/    8C46 : C3                  	ret
@@ -92,7 +92,7 @@
       89/    8C47 : B8 00 00            	mov	ax, DT_SEG
       90/    8C4A : 8E D8               	MOV	DS,AX
       91/    8C4C : 8E D0               	MOV	SS,AX
-      92/    8C4E : BC 00 06            	MOV	SP,TB_STACK
+      92/    8C4E : BC 00 07            	MOV	SP,TB_STACK
       93/    8C51 :                     
       94/    8C51 : E8 D7 FF            	call	update_seed
       95/    8C54 : B8 27 8C            	mov	ax, ret_mon
@@ -153,8 +153,8 @@
      150/    8C7E : 8B EC               	mov	bp,sp
      151/    8C80 :                     
      152/    8C80 : 8B 46 04            	mov	ax,[bp+4]	; Load Arg1 into AX
-     153/    8C83 : A3 00 06            	mov	[SEED], ax
-     154/    8C86 : A3 02 06            	mov	[SEEDX], ax
+     153/    8C83 : A3 00 07            	mov	[SEED], ax
+     154/    8C86 : A3 02 07            	mov	[SEEDX], ax
      155/    8C89 :                     	
      156/    8C89 : 5D                  	pop	bp
      157/    8C8A : C3                  	ret
@@ -163,7 +163,7 @@
      160/    8C8B : 51                  	push	cx
      161/    8C8C : 52                  	push	dx
      162/    8C8D :                     
-     163/    8C8D : A1 02 06            	mov	ax, [SEEDX]
+     163/    8C8D : A1 02 07            	mov	ax, [SEEDX]
      164/    8C90 : 0B C0               	or	ax, ax
      165/    8C92 : 75 03               	jnz	RND3
      166/    8C94 : B8 01 00            	mov	ax, 1
@@ -178,18 +178,18 @@
      175/    8CA5 : 33 C2               	xor	ax, dx
      176/    8CA7 : 50                  	push	ax
      177/    8CA8 :                     
-     178/    8CA8 : A1 00 06            	mov	ax, [SEED]
+     178/    8CA8 : A1 00 07            	mov	ax, [SEED]
      179/    8CAB : 0B C0               	or	ax, ax
      180/    8CAD : 75 03               	jnz	RND4
      181/    8CAF : B8 01 00            	mov	ax, 1
      182/    8CB2 :                     RND4:
-     183/    8CB2 : A3 02 06            	mov	[SEEDX], ax
+     183/    8CB2 : A3 02 07            	mov	[SEEDX], ax
      184/    8CB5 : 8B D0               	mov	dx, ax
      185/    8CB7 : D1 EA               	shr	dx, 1
      186/    8CB9 : 33 C2               	xor	ax, dx
      187/    8CBB : 5A                  	pop	dx
      188/    8CBC : 33 C2               	xor	ax, dx
-     189/    8CBE : A3 00 06            	mov	[SEED], ax	; 0 - FFFFH : -32768 ~ 32767
+     189/    8CBE : A3 00 07            	mov	[SEED], ax	; 0 - FFFFH : -32768 ~ 32767
      190/    8CC1 : 25 FF 7F            	and	ax, 7fffh	; 0 - 7FFFH : 0 ~ 32767
      191/    8CC4 :                     
      192/    8CC4 : 5A                  	pop dx
@@ -414,7 +414,7 @@
      411/    8E19 : 8A 56 FF            	mov	dl,byte ptr [bp-1]
      412/    8E1C : B6 00               	mov	dh,0
      413/    8E1E : 8B DA               	mov	bx,dx
-     414/    8E20 : 88 87 AA 06         	mov	byte ptr _lbuf[bx],al
+     414/    8E20 : 88 87 AA 07         	mov	byte ptr _lbuf[bx],al
      415/    8E24 : FE 46 FF            	inc	byte ptr [bp-1]
      416/    8E27 : FF 76 FE            	push	word ptr [bp-2]
      417/    8E2A : E8 31 FE            	call	_c_putch
@@ -431,7 +431,7 @@
      428/    8E3B : 8A 46 FF            	mov	al,byte ptr [bp-1]
      429/    8E3E : B4 00               	mov	ah,0
      430/    8E40 : 8B D8               	mov	bx,ax
-     431/    8E42 : C6 87 AA 06 00      	mov	byte ptr _lbuf[bx],0
+     431/    8E42 : C6 87 AA 07 00      	mov	byte ptr _lbuf[bx],0
      432/    8E47 : 80 7E FF 00         	cmp	byte ptr [bp-1],0
      433/    8E4B : 76 27               	jbe	c_gets40
      434/    8E4D : EB 00               	jmp	c_gets41
@@ -441,7 +441,7 @@
      438/    8E52 : 8A 46 FF            	mov	al,byte ptr [bp-1]
      439/    8E55 : B4 00               	mov	ah,0
      440/    8E57 : 8B D8               	mov	bx,ax
-     441/    8E59 : FF B7 AA 06         	push	word ptr _lbuf[bx]
+     441/    8E59 : FF B7 AA 07         	push	word ptr _lbuf[bx]
      442/    8E5D : E8 EE FE            	call	_c_isspace
      443/    8E60 : 59                  	pop	cx
      444/    8E61 : 0A C0               	or	al,al
@@ -451,7 +451,7 @@
      448/    8E68 : 8A 46 FF            	mov	al,byte ptr [bp-1]
      449/    8E6B : B4 00               	mov	ah,0
      450/    8E6D : 8B D8               	mov	bx,ax
-     451/    8E6F : C6 87 AA 06 00      	mov	byte ptr _lbuf[bx],0
+     451/    8E6F : C6 87 AA 07 00      	mov	byte ptr _lbuf[bx],0
      452/    8E74 :                     c_gets40:
      453/    8E74 :                     c_gets31:
      454/    8E74 : 8B E5               	mov	sp,bp
@@ -474,7 +474,7 @@
      471/    8E92 : C6 46 FF 00         	mov	byte ptr [bp-1],0
      472/    8E96 :                     putnum46:
      473/    8E96 :                     ;	?debug	L 238
-     474/    8E96 : C6 06 B0 06 00      	mov	byte ptr _lbuf+6,0
+     474/    8E96 : C6 06 B0 07 00      	mov	byte ptr _lbuf+6,0
      475/    8E9B :                     ;	?debug	L 239
      476/    8E9B : C6 46 FE 06         	mov	byte ptr [bp-2],6
      477/    8E9F :                     putnum49:
@@ -488,7 +488,7 @@
      485/    8EAE : 8A 46 FE            	mov	al,byte ptr [bp-2]
      486/    8EB1 : B4 00               	mov	ah,0
      487/    8EB3 : 8B D8               	mov	bx,ax
-     488/    8EB5 : 88 97 AA 06         	mov	byte ptr _lbuf[bx],dl
+     488/    8EB5 : 88 97 AA 07         	mov	byte ptr _lbuf[bx],dl
      489/    8EB9 :                     ;	?debug	L 242
      490/    8EB9 : 8B 46 04            	mov	ax,word ptr [bp+4]
      491/    8EBC : BB 0A 00            	mov	bx,10
@@ -508,7 +508,7 @@
      505/    8ED4 : 8A 46 FE            	mov	al,byte ptr [bp-2]
      506/    8ED7 : B4 00               	mov	ah,0
      507/    8ED9 : 8B D8               	mov	bx,ax
-     508/    8EDB : C6 87 AA 06 2D      	mov	byte ptr _lbuf[bx],45
+     508/    8EDB : C6 87 AA 07 2D      	mov	byte ptr _lbuf[bx],45
      509/    8EE0 :                     putnum50:
      510/    8EE0 : EB 0A               	jmp	putnum51
      511/    8EE2 :                     putnum53:
@@ -531,7 +531,7 @@
      528/    8EFB :                     ;	?debug	L 253
      529/    8EFB : 8A 46 FE            	mov	al,byte ptr [bp-2]
      530/    8EFE : B4 00               	mov	ah,0
-     531/    8F00 : 05 AA 06            	add	ax,_lbuf
+     531/    8F00 : 05 AA 07            	add	ax,_lbuf
      532/    8F03 : 50                  	push	ax
      533/    8F04 : E8 A1 FE            	call	_c_puts
      534/    8F07 : 59                  	pop	cx
@@ -598,7 +598,7 @@
      595/    8F6A : 8A 56 FE            	mov	dl,byte ptr [bp-2]
      596/    8F6D : B6 00               	mov	dh,0
      597/    8F6F : 8B DA               	mov	bx,dx
-     598/    8F71 : 88 87 AA 06         	mov	byte ptr _lbuf[bx],al
+     598/    8F71 : 88 87 AA 07         	mov	byte ptr _lbuf[bx],al
      599/    8F75 : FE 46 FE            	inc	byte ptr [bp-2]
      600/    8F78 :                     ;	?debug	L 273
      601/    8F78 : FF 76 FD            	push	word ptr [bp-3]
@@ -621,9 +621,9 @@
      618/    8F8E : 8A 46 FE            	mov	al,byte ptr [bp-2]
      619/    8F91 : B4 00               	mov	ah,0
      620/    8F93 : 8B D8               	mov	bx,ax
-     621/    8F95 : C6 87 AA 06 00      	mov	byte ptr _lbuf[bx],0
+     621/    8F95 : C6 87 AA 07 00      	mov	byte ptr _lbuf[bx],0
      622/    8F9A :                     ;	?debug	L 279
-     623/    8F9A : A0 AA 06            	mov	al,byte ptr _lbuf
+     623/    8F9A : A0 AA 07            	mov	al,byte ptr _lbuf
      624/    8F9D : 98                  	cbw	
      625/    8F9E : 3D 2B 00            	cmp	ax,43
      626/    8FA1 : 74 11               	je	putnum66
@@ -666,7 +666,7 @@
      663/    8FDF : B6 00               	mov	dh,0
      664/    8FE1 : 8B DA               	mov	bx,dx
      665/    8FE3 : 50                  	push	ax
-     666/    8FE4 : 8A 87 AA 06         	mov	al,byte ptr _lbuf[bx]
+     666/    8FE4 : 8A 87 AA 07         	mov	al,byte ptr _lbuf[bx]
      667/    8FE8 : 98                  	cbw	
      668/    8FE9 : 5A                  	pop	dx
      669/    8FEA : 03 D0               	add	dx,ax
@@ -678,7 +678,7 @@
      675/    8FF8 : 3B 46 FA            	cmp	ax,word ptr [bp-6]
      676/    8FFB : 7E 05               	jle	putnum71
      677/    8FFD :                     ;	?debug	L 299
-     678/    8FFD : C6 06 CA 07 02      	mov	byte ptr _err,2
+     678/    8FFD : C6 06 CA 08 02      	mov	byte ptr _err,2
      679/    9002 :                     putnum71:
      680/    9002 :                     ;	?debug	L 301
      681/    9002 : 8B 46 FA            	mov	ax,word ptr [bp-6]
@@ -688,7 +688,7 @@
      685/    9008 : 8A 46 FE            	mov	al,byte ptr [bp-2]
      686/    900B : B4 00               	mov	ah,0
      687/    900D : 8B D8               	mov	bx,ax
-     688/    900F : 80 BF AA 06 00      	cmp	byte ptr _lbuf[bx],0
+     688/    900F : 80 BF AA 07 00      	cmp	byte ptr _lbuf[bx],0
      689/    9014 : 75 BE               	jne	putnum70
      690/    9016 :                     putnum69:
      691/    9016 :                     ;	?debug	L 303
@@ -721,7 +721,7 @@
      718/    9038 :                     ;	?debug	L 313
      719/    9038 : C7 46 F8 00 00      	mov	word ptr [bp-8],0
      720/    903D :                     ;	?debug	L 315
-     721/    903D : BE AA 06            	mov	si,_lbuf
+     721/    903D : BE AA 07            	mov	si,_lbuf
      722/    9040 : E9 9E 02            	jmp	L_75
      723/    9043 :                     L_77:
      724/    9043 :                     ;	?debug	L 321
@@ -775,7 +775,7 @@
      772/    908C : 80 7E F7 9F         	cmp	byte ptr [bp-9],159
      773/    9090 : 72 0A               	jb	L_90
      774/    9092 :                     ;	?debug	L 337
-     775/    9092 : C6 06 CA 07 04      	mov	byte ptr _err,4
+     775/    9092 : C6 06 CA 08 04      	mov	byte ptr _err,4
      776/    9097 :                     ;	?debug	L 338
      777/    9097 : B0 00               	mov	al,0
      778/    9099 : E9 5F 02            	jmp	L_74
@@ -785,7 +785,7 @@
      782/    909F : 8A 56 F7            	mov	dl,byte ptr [bp-9]
      783/    90A2 : B6 00               	mov	dh,0
      784/    90A4 : 8B DA               	mov	bx,dx
-     785/    90A6 : 88 87 06 06         	mov	byte ptr _ibuf[bx],al
+     785/    90A6 : 88 87 06 07         	mov	byte ptr _ibuf[bx],al
      786/    90AA : FE 46 F7            	inc	byte ptr [bp-9]
      787/    90AD :                     ;	?debug	L 343
      788/    90AD : 8B F7               	mov	si,di
@@ -838,7 +838,7 @@
      835/    90F1 : 3B C3               	cmp	ax,bx
      836/    90F3 : 7C 0A               	jl	L_99
      837/    90F5 :                     ;	?debug	L 354
-     838/    90F5 : C6 06 CA 07 04      	mov	byte ptr _err,4
+     838/    90F5 : C6 06 CA 08 04      	mov	byte ptr _err,4
      839/    90FA :                     ;	?debug	L 355
      840/    90FA : B0 00               	mov	al,0
      841/    90FC : E9 FC 01            	jmp	L_74
@@ -848,7 +848,7 @@
      845/    9102 : 8A 56 F7            	mov	dl,byte ptr [bp-9]
      846/    9105 : B6 00               	mov	dh,0
      847/    9107 : 8B DA               	mov	bx,dx
-     848/    9109 : 88 87 06 06         	mov	byte ptr _ibuf[bx],al
+     848/    9109 : 88 87 06 07         	mov	byte ptr _ibuf[bx],al
      849/    910D : FE 46 F7            	inc	byte ptr [bp-9]
      850/    9110 : EB 11               	jmp	L_100
      851/    9112 :                     L_102:
@@ -857,7 +857,7 @@
      854/    9114 : 8A 56 F7            	mov	dl,byte ptr [bp-9]
      855/    9117 : B6 00               	mov	dh,0
      856/    9119 : 8B DA               	mov	bx,dx
-     857/    911B : 88 87 06 06         	mov	byte ptr _ibuf[bx],al
+     857/    911B : 88 87 06 07         	mov	byte ptr _ibuf[bx],al
      858/    911F : 46                  	inc	si
      859/    9120 : FE 46 F7            	inc	byte ptr [bp-9]
      860/    9123 :                     L_100:
@@ -909,7 +909,7 @@
      906/    916D : 3B 46 FE            	cmp	ax,word ptr [bp-2]
      907/    9170 : 7E 0A               	jle	L_108
      908/    9172 :                     ;	?debug	L 376
-     909/    9172 : C6 06 CA 07 02      	mov	byte ptr _err,2
+     909/    9172 : C6 06 CA 08 02      	mov	byte ptr _err,2
      910/    9177 :                     ;	?debug	L 377
      911/    9177 : B0 00               	mov	al,0
      912/    9179 : E9 7F 01            	jmp	L_74
@@ -929,7 +929,7 @@
      926/    918C : 80 7E F7 9D         	cmp	byte ptr [bp-9],157
      927/    9190 : 72 0A               	jb	L_109
      928/    9192 :                     ;	?debug	L 383
-     929/    9192 : C6 06 CA 07 04      	mov	byte ptr _err,4
+     929/    9192 : C6 06 CA 08 04      	mov	byte ptr _err,4
      930/    9197 :                     ;	?debug	L 384
      931/    9197 : B0 00               	mov	al,0
      932/    9199 : E9 5F 01            	jmp	L_74
@@ -938,7 +938,7 @@
      935/    919C : 8A 46 F7            	mov	al,byte ptr [bp-9]
      936/    919F : B4 00               	mov	ah,0
      937/    91A1 : 8B D8               	mov	bx,ax
-     938/    91A3 : C6 87 06 06 23      	mov	byte ptr _ibuf[bx],35
+     938/    91A3 : C6 87 06 07 23      	mov	byte ptr _ibuf[bx],35
      939/    91A8 : FE 46 F7            	inc	byte ptr [bp-9]
      940/    91AB :                     ;	?debug	L 387
      941/    91AB : 8A 46 FC            	mov	al,byte ptr [bp-4]
@@ -946,7 +946,7 @@
      943/    91B0 : 8A 56 F7            	mov	dl,byte ptr [bp-9]
      944/    91B3 : B6 00               	mov	dh,0
      945/    91B5 : 8B DA               	mov	bx,dx
-     946/    91B7 : 88 87 06 06         	mov	byte ptr _ibuf[bx],al
+     946/    91B7 : 88 87 06 07         	mov	byte ptr _ibuf[bx],al
      947/    91BB : FE 46 F7            	inc	byte ptr [bp-9]
      948/    91BE :                     ;	?debug	L 388
      949/    91BE : 8B 46 FC            	mov	ax,word ptr [bp-4]
@@ -955,7 +955,7 @@
      952/    91C5 : 8A 56 F7            	mov	dl,byte ptr [bp-9]
      953/    91C8 : B6 00               	mov	dh,0
      954/    91CA : 8B DA               	mov	bx,dx
-     955/    91CC : 88 87 06 06         	mov	byte ptr _ibuf[bx],al
+     955/    91CC : 88 87 06 07         	mov	byte ptr _ibuf[bx],al
      956/    91D0 : FE 46 F7            	inc	byte ptr [bp-9]
      957/    91D3 :                     ;	?debug	L 389
      958/    91D3 : 8B F7               	mov	si,di
@@ -1005,7 +1005,7 @@
     1002/    9217 : 3B C3               	cmp	ax,bx
     1003/    9219 : 7C 0A               	jl	L_118
     1004/    921B :                     ;	?debug	L 400
-    1005/    921B : C6 06 CA 07 04      	mov	byte ptr _err,4
+    1005/    921B : C6 06 CA 08 04      	mov	byte ptr _err,4
     1006/    9220 :                     ;	?debug	L 401
     1007/    9220 : B0 00               	mov	al,0
     1008/    9222 : E9 D6 00            	jmp	L_74
@@ -1014,14 +1014,14 @@
     1011/    9225 : 8A 46 F7            	mov	al,byte ptr [bp-9]
     1012/    9228 : B4 00               	mov	ah,0
     1013/    922A : 8B D8               	mov	bx,ax
-    1014/    922C : C6 87 06 06 25      	mov	byte ptr _ibuf[bx],37
+    1014/    922C : C6 87 06 07 25      	mov	byte ptr _ibuf[bx],37
     1015/    9231 : FE 46 F7            	inc	byte ptr [bp-9]
     1016/    9234 :                     ;	?debug	L 404
     1017/    9234 : 8A 46 F6            	mov	al,byte ptr [bp-10]
     1018/    9237 : 8A 56 F7            	mov	dl,byte ptr [bp-9]
     1019/    923A : B6 00               	mov	dh,0
     1020/    923C : 8B DA               	mov	bx,dx
-    1021/    923E : 88 87 06 06         	mov	byte ptr _ibuf[bx],al
+    1021/    923E : 88 87 06 07         	mov	byte ptr _ibuf[bx],al
     1022/    9242 : FE 46 F7            	inc	byte ptr [bp-9]
     1023/    9245 : EB 11               	jmp	L_119
     1024/    9247 :                     L_121:
@@ -1030,7 +1030,7 @@
     1027/    9249 : 8A 56 F7            	mov	dl,byte ptr [bp-9]
     1028/    924C : B6 00               	mov	dh,0
     1029/    924E : 8B DA               	mov	bx,dx
-    1030/    9250 : 88 87 06 06         	mov	byte ptr _ibuf[bx],al
+    1030/    9250 : 88 87 06 07         	mov	byte ptr _ibuf[bx],al
     1031/    9254 : 46                  	inc	si
     1032/    9255 : FE 46 F7            	inc	byte ptr [bp-9]
     1033/    9258 :                     L_119:
@@ -1059,7 +1059,7 @@
     1056/    9276 : 80 7E F7 9E         	cmp	byte ptr [bp-9],158
     1057/    927A : 72 09               	jb	L_125
     1058/    927C :                     ;	?debug	L 415
-    1059/    927C : C6 06 CA 07 04      	mov	byte ptr _err,4
+    1059/    927C : C6 06 CA 08 04      	mov	byte ptr _err,4
     1060/    9281 :                     ;	?debug	L 416
     1061/    9281 : B0 00               	mov	al,0
     1062/    9283 : EB 76               	jmp	L_74
@@ -1070,15 +1070,15 @@
     1067/    928B : 8A 46 F7            	mov	al,byte ptr [bp-9]
     1068/    928E : B4 00               	mov	ah,0
     1069/    9290 : 8B D8               	mov	bx,ax
-    1070/    9292 : 80 BF 04 06 24      	cmp	byte ptr _ibuf[bx-2],36
+    1070/    9292 : 80 BF 04 07 24      	cmp	byte ptr _ibuf[bx-2],36
     1071/    9297 : 75 17               	jne	L_126
     1072/    9299 : 8A 46 F7            	mov	al,byte ptr [bp-9]
     1073/    929C : B4 00               	mov	ah,0
     1074/    929E : 8B D8               	mov	bx,ax
-    1075/    92A0 : 80 BF 02 06 24      	cmp	byte ptr _ibuf[bx-4],36
+    1075/    92A0 : 80 BF 02 07 24      	cmp	byte ptr _ibuf[bx-4],36
     1076/    92A5 : 75 09               	jne	L_126
     1077/    92A7 :                     ;	?debug	L 419
-    1078/    92A7 : C6 06 CA 07 14      	mov	byte ptr _err,20
+    1078/    92A7 : C6 06 CA 08 14      	mov	byte ptr _err,20
     1079/    92AC :                     ;	?debug	L 420
     1080/    92AC : B0 00               	mov	al,0
     1081/    92AE : EB 4B               	jmp	L_74
@@ -1087,7 +1087,7 @@
     1084/    92B0 : 8A 46 F7            	mov	al,byte ptr [bp-9]
     1085/    92B3 : B4 00               	mov	ah,0
     1086/    92B5 : 8B D8               	mov	bx,ax
-    1087/    92B7 : C6 87 06 06 24      	mov	byte ptr _ibuf[bx],36
+    1087/    92B7 : C6 87 06 07 24      	mov	byte ptr _ibuf[bx],36
     1088/    92BC : FE 46 F7            	inc	byte ptr [bp-9]
     1089/    92BF :                     ;	?debug	L 423
     1090/    92BF : FF 35               	push	word ptr [di]
@@ -1097,7 +1097,7 @@
     1094/    92C7 : 8A 56 F7            	mov	dl,byte ptr [bp-9]
     1095/    92CA : B6 00               	mov	dh,0
     1096/    92CC : 8B DA               	mov	bx,dx
-    1097/    92CE : 88 87 06 06         	mov	byte ptr _ibuf[bx],al
+    1097/    92CE : 88 87 06 07         	mov	byte ptr _ibuf[bx],al
     1098/    92D2 : FE 46 F7            	inc	byte ptr [bp-9]
     1099/    92D5 :                     ;	?debug	L 424
     1100/    92D5 : 46                  	inc	si
@@ -1105,7 +1105,7 @@
     1102/    92D6 : EB 09               	jmp	L_127
     1103/    92D8 :                     L_124:
     1104/    92D8 :                     ;	?debug	L 430
-    1105/    92D8 : C6 06 CA 07 14      	mov	byte ptr _err,20
+    1105/    92D8 : C6 06 CA 08 14      	mov	byte ptr _err,20
     1106/    92DD :                     ;	?debug	L 431
     1107/    92DD : B0 00               	mov	al,0
     1108/    92DF : EB 1A               	jmp	L_74
@@ -1123,7 +1123,7 @@
     1120/    92E9 : 8A 46 F7            	mov	al,byte ptr [bp-9]
     1121/    92EC : B4 00               	mov	ah,0
     1122/    92EE : 8B D8               	mov	bx,ax
-    1123/    92F0 : C6 87 06 06 26      	mov	byte ptr _ibuf[bx],38
+    1123/    92F0 : C6 87 06 07 26      	mov	byte ptr _ibuf[bx],38
     1124/    92F5 : FE 46 F7            	inc	byte ptr [bp-9]
     1125/    92F8 :                     ;	?debug	L 435
     1126/    92F8 : 8A 46 F7            	mov	al,byte ptr [bp-9]
@@ -1168,7 +1168,7 @@
     1165/    9326 : 8B EC               	mov	bp,sp
     1166/    9328 : 56                  	push	si
     1167/    9329 :                     ;	?debug	L 449
-    1168/    9329 : BE 31 08            	mov	si,_listbuf
+    1168/    9329 : BE 31 09            	mov	si,_listbuf
     1169/    932C : EB 12               	jmp	L_138
     1170/    932E :                     L_137:
     1171/    932E :                     ;	?debug	L 450
@@ -1199,7 +1199,7 @@
     1196/    934A :                     _getsize:
     1197/    934A : 56                  	push	si
     1198/    934B :                     ;	?debug	L 459
-    1199/    934B : BE 31 08            	mov	si,_listbuf
+    1199/    934B : BE 31 09            	mov	si,_listbuf
     1200/    934E : EB 06               	jmp	L_144
     1201/    9350 :                     L_143:
     1202/    9350 :                     L_142:
@@ -1228,16 +1228,16 @@
     1225/    936A : 57                  	push	di
     1226/    936B :                     ;	?debug	L 470
     1227/    936B : E8 DC FF            	call	_getsize
-    1228/    936E : 8A 16 06 06         	mov	dl,byte ptr _ibuf
+    1228/    936E : 8A 16 06 07         	mov	dl,byte ptr _ibuf
     1229/    9372 : B6 00               	mov	dh,0
     1230/    9374 : 3B C2               	cmp	ax,dx
     1231/    9376 : 7D 08               	jge	L_146
     1232/    9378 :                     ;	?debug	L 471
-    1233/    9378 : C6 06 CA 07 05      	mov	byte ptr _err,5
+    1233/    9378 : C6 06 CA 08 05      	mov	byte ptr _err,5
     1234/    937D : E9 AF 00            	jmp	L_145
     1235/    9380 :                     L_146:
     1236/    9380 :                     ;	?debug	L 475
-    1237/    9380 : B8 06 06            	mov	ax,_ibuf
+    1237/    9380 : B8 06 07            	mov	ax,_ibuf
     1238/    9383 : 50                  	push	ax
     1239/    9384 : E8 7A FF            	call	_getlineno
     1240/    9387 : 59                  	pop	cx
@@ -1250,7 +1250,7 @@
     1247/    9393 : E8 6B FF            	call	_getlineno
     1248/    9396 : 59                  	pop	cx
     1249/    9397 : 50                  	push	ax
-    1250/    9398 : B8 06 06            	mov	ax,_ibuf
+    1250/    9398 : B8 06 07            	mov	ax,_ibuf
     1251/    939B : 50                  	push	ax
     1252/    939C : E8 62 FF            	call	_getlineno
     1253/    939F : 59                  	pop	cx
@@ -1292,7 +1292,7 @@
     1289/    93CF : C6 04 00            	mov	byte ptr [si],0
     1290/    93D2 :                     L_147:
     1291/    93D2 :                     ;	?debug	L 489
-    1292/    93D2 : 80 3E 06 06 04      	cmp	byte ptr _ibuf,4
+    1292/    93D2 : 80 3E 06 07 04      	cmp	byte ptr _ibuf,4
     1293/    93D7 : 75 02               	jne	L_154
     1294/    93D9 : EB 54               	jmp	L_145
     1295/    93DB :                     L_154:
@@ -1314,7 +1314,7 @@
     1311/    93F0 : 40                  	inc	ax
     1312/    93F1 : 89 46 FE            	mov	word ptr [bp-2],ax
     1313/    93F4 :                     ;	?debug	L 495
-    1314/    93F4 : A0 06 06            	mov	al,byte ptr _ibuf
+    1314/    93F4 : A0 06 07            	mov	al,byte ptr _ibuf
     1315/    93F7 : B4 00               	mov	ah,0
     1316/    93F9 : 8B F8               	mov	di,ax
     1317/    93FB : 03 FE               	add	di,si
@@ -1333,13 +1333,13 @@
     1330/    940D : 75 F0               	jne	L_161
     1331/    940F :                     L_160:
     1332/    940F :                     ;	?debug	L 500
-    1333/    940F : A0 06 06            	mov	al,byte ptr _ibuf
+    1333/    940F : A0 06 07            	mov	al,byte ptr _ibuf
     1334/    9412 : B4 00               	mov	ah,0
     1335/    9414 : 89 46 FE            	mov	word ptr [bp-2],ax
     1336/    9417 :                     ;	?debug	L 501
     1337/    9417 : 8B 76 FC            	mov	si,word ptr [bp-4]
     1338/    941A :                     ;	?debug	L 502
-    1339/    941A : BF 06 06            	mov	di,_ibuf
+    1339/    941A : BF 06 07            	mov	di,_ibuf
     1340/    941D : EB 06               	jmp	L_162
     1341/    941F :                     L_164:
     1342/    941F :                     ;	?debug	L 504
@@ -1569,7 +1569,7 @@
     1566/    9566 : EB 07               	jmp	L_192
     1567/    9568 :                     L_182:
     1568/    9568 :                     ;	?debug	L 570
-    1569/    9568 : C6 06 CA 07 15      	mov	byte ptr _err,21
+    1569/    9568 : C6 06 CA 08 15      	mov	byte ptr _err,21
     1570/    956D : EB 08               	jmp	L_165
     1571/    956F :                     L_192:
     1572/    956F :                     L_181:
@@ -1595,38 +1595,38 @@
     1592/    957D : 8B EC               	mov	bp,sp
     1593/    957F : 83 EC 02            	sub	sp,2
     1594/    9582 :                     ;	?debug	L 580
-    1595/    9582 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1595/    9582 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1596/    9586 : 80 3F 13            	cmp	byte ptr [bx],19
     1597/    9589 : 74 09               	je	L_195
     1598/    958B :                     ;	?debug	L 581
-    1599/    958B : C6 06 CA 07 11      	mov	byte ptr _err,17
+    1599/    958B : C6 06 CA 08 11      	mov	byte ptr _err,17
     1600/    9590 :                     ;	?debug	L 582
     1601/    9590 : 33 C0               	xor	ax,ax
     1602/    9592 : EB 2E               	jmp	L_194
     1603/    9594 :                     L_195:
     1604/    9594 :                     ;	?debug	L 584
-    1605/    9594 : FF 06 A8 06         	inc	word ptr _cip
+    1605/    9594 : FF 06 A8 07         	inc	word ptr _cip
     1606/    9598 :                     ;	?debug	L 585
     1607/    9598 : E8 61 02            	call	_iexp
     1608/    959B : 89 46 FE            	mov	word ptr [bp-2],ax
     1609/    959E :                     ;	?debug	L 586
-    1610/    959E : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    1610/    959E : 80 3E CA 08 00      	cmp	byte ptr _err,0
     1611/    95A3 : 74 04               	je	L_196
     1612/    95A5 : 33 C0               	xor	ax,ax
     1613/    95A7 : EB 19               	jmp	L_194
     1614/    95A9 :                     L_196:
     1615/    95A9 :                     ;	?debug	L 588
-    1616/    95A9 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1616/    95A9 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1617/    95AD : 80 3F 14            	cmp	byte ptr [bx],20
     1618/    95B0 : 74 09               	je	L_197
     1619/    95B2 :                     ;	?debug	L 589
-    1620/    95B2 : C6 06 CA 07 11      	mov	byte ptr _err,17
+    1620/    95B2 : C6 06 CA 08 11      	mov	byte ptr _err,17
     1621/    95B7 :                     ;	?debug	L 590
     1622/    95B7 : 33 C0               	xor	ax,ax
     1623/    95B9 : EB 07               	jmp	L_194
     1624/    95BB :                     L_197:
     1625/    95BB :                     ;	?debug	L 592
-    1626/    95BB : FF 06 A8 06         	inc	word ptr _cip
+    1626/    95BB : FF 06 A8 07         	inc	word ptr _cip
     1627/    95BF :                     ;	?debug	L 594
     1628/    95BF : 8B 46 FE            	mov	ax,word ptr [bp-2]
     1629/    95C2 :                     L_194:
@@ -1641,7 +1641,7 @@
     1638/    95C7 : 8B EC               	mov	bp,sp
     1639/    95C9 : 83 EC 02            	sub	sp,2
     1640/    95CC :                     ;	?debug	L 601
-    1641/    95CC : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1641/    95CC : 8B 1E A8 07         	mov	bx,word ptr _cip
     1642/    95D0 : 8A 07               	mov	al,byte ptr [bx]
     1643/    95D2 : B4 00               	mov	ah,0
     1644/    95D4 : 2D 0F 00            	sub	ax,15
@@ -1678,25 +1678,25 @@
     1675/    9612 : 58 96               	dw	L_203
     1676/    9614 :                     L_200:
     1677/    9614 :                     ;	?debug	L 603
-    1678/    9614 : FF 06 A8 06         	inc	word ptr _cip
+    1678/    9614 : FF 06 A8 07         	inc	word ptr _cip
     1679/    9618 :                     ;	?debug	L 604
-    1680/    9618 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1680/    9618 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1681/    961C : 8A 47 01            	mov	al,byte ptr [bx+1]
     1682/    961F : B4 00               	mov	ah,0
     1683/    9621 : B1 08               	mov	cl,8
     1684/    9623 : D3 E0               	shl	ax,cl
-    1685/    9625 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1685/    9625 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1686/    9629 : 8A 17               	mov	dl,byte ptr [bx]
     1687/    962B : B6 00               	mov	dh,0
     1688/    962D : 0B C2               	or	ax,dx
     1689/    962F : 89 46 FE            	mov	word ptr [bp-2],ax
     1690/    9632 :                     ;	?debug	L 605
-    1691/    9632 : 83 06 A8 06 02      	add	word ptr _cip,2
+    1691/    9632 : 83 06 A8 07 02      	add	word ptr _cip,2
     1692/    9637 :                     ;	?debug	L 606
     1693/    9637 : E9 EA 00            	jmp	L_199
     1694/    963A :                     L_201:
     1695/    963A :                     ;	?debug	L 608
-    1696/    963A : FF 06 A8 06         	inc	word ptr _cip
+    1696/    963A : FF 06 A8 07         	inc	word ptr _cip
     1697/    963E :                     ;	?debug	L 609
     1698/    963E : E8 85 FF            	call	_ivalue
     1699/    9641 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -1704,7 +1704,7 @@
     1701/    9644 : E9 DD 00            	jmp	L_199
     1702/    9647 :                     L_202:
     1703/    9647 :                     ;	?debug	L 612
-    1704/    9647 : FF 06 A8 06         	inc	word ptr _cip
+    1704/    9647 : FF 06 A8 07         	inc	word ptr _cip
     1705/    964B :                     ;	?debug	L 613
     1706/    964B : E8 78 FF            	call	_ivalue
     1707/    964E : 33 D2               	xor	dx,dx
@@ -1714,16 +1714,16 @@
     1711/    9655 : E9 CC 00            	jmp	L_199
     1712/    9658 :                     L_203:
     1713/    9658 :                     ;	?debug	L 616
-    1714/    9658 : FF 06 A8 06         	inc	word ptr _cip
+    1714/    9658 : FF 06 A8 07         	inc	word ptr _cip
     1715/    965C :                     ;	?debug	L 617
-    1716/    965C : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1716/    965C : 8B 1E A8 07         	mov	bx,word ptr _cip
     1717/    9660 : 8A 07               	mov	al,byte ptr [bx]
     1718/    9662 : B4 00               	mov	ah,0
     1719/    9664 : 8B D8               	mov	bx,ax
     1720/    9666 : D1 E3               	shl	bx,1
-    1721/    9668 : 8B 87 FB 07         	mov	ax,word ptr _var[bx]
+    1721/    9668 : 8B 87 FB 08         	mov	ax,word ptr _var[bx]
     1722/    966C : 89 46 FE            	mov	word ptr [bp-2],ax
-    1723/    966F : FF 06 A8 06         	inc	word ptr _cip
+    1723/    966F : FF 06 A8 07         	inc	word ptr _cip
     1724/    9673 :                     ;	?debug	L 618
     1725/    9673 : E9 AE 00            	jmp	L_199
     1726/    9676 :                     L_204:
@@ -1734,12 +1734,12 @@
     1731/    967C : E9 A5 00            	jmp	L_199
     1732/    967F :                     L_205:
     1733/    967F :                     ;	?debug	L 623
-    1734/    967F : FF 06 A8 06         	inc	word ptr _cip
+    1734/    967F : FF 06 A8 07         	inc	word ptr _cip
     1735/    9683 :                     ;	?debug	L 624
     1736/    9683 : E8 F6 FE            	call	_getparam
     1737/    9686 : 89 46 FE            	mov	word ptr [bp-2],ax
     1738/    9689 :                     ;	?debug	L 625
-    1739/    9689 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    1739/    9689 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     1740/    968E : 74 03               	je	L_206
     1741/    9690 :                     ;	?debug	L 626
     1742/    9690 : E9 91 00            	jmp	L_199
@@ -1748,25 +1748,25 @@
     1745/    9693 : 83 7E FE 40         	cmp	word ptr [bp-2],64
     1746/    9697 : 7C 08               	jl	L_207
     1747/    9699 :                     ;	?debug	L 628
-    1748/    9699 : C6 06 CA 07 03      	mov	byte ptr _err,3
+    1748/    9699 : C6 06 CA 08 03      	mov	byte ptr _err,3
     1749/    969E :                     ;	?debug	L 629
     1750/    969E : E9 83 00            	jmp	L_199
     1751/    96A1 :                     L_207:
     1752/    96A1 :                     ;	?debug	L 631
     1753/    96A1 : 8B 5E FE            	mov	bx,word ptr [bp-2]
     1754/    96A4 : D1 E3               	shl	bx,1
-    1755/    96A6 : 8B 87 4A 07         	mov	ax,word ptr _arr[bx]
+    1755/    96A6 : 8B 87 4A 08         	mov	ax,word ptr _arr[bx]
     1756/    96AA : 89 46 FE            	mov	word ptr [bp-2],ax
     1757/    96AD :                     ;	?debug	L 632
     1758/    96AD : EB 75               	jmp	L_199
     1759/    96AF :                     L_208:
     1760/    96AF :                     ;	?debug	L 634
-    1761/    96AF : FF 06 A8 06         	inc	word ptr _cip
+    1761/    96AF : FF 06 A8 07         	inc	word ptr _cip
     1762/    96B3 :                     ;	?debug	L 635
     1763/    96B3 : E8 C6 FE            	call	_getparam
     1764/    96B6 : 89 46 FE            	mov	word ptr [bp-2],ax
     1765/    96B9 :                     ;	?debug	L 636
-    1766/    96B9 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    1766/    96B9 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     1767/    96BE : 74 02               	je	L_209
     1768/    96C0 :                     ;	?debug	L 637
     1769/    96C0 : EB 62               	jmp	L_199
@@ -1780,12 +1780,12 @@
     1777/    96CC : EB 56               	jmp	L_199
     1778/    96CE :                     L_210:
     1779/    96CE :                     ;	?debug	L 641
-    1780/    96CE : FF 06 A8 06         	inc	word ptr _cip
+    1780/    96CE : FF 06 A8 07         	inc	word ptr _cip
     1781/    96D2 :                     ;	?debug	L 642
     1782/    96D2 : E8 A7 FE            	call	_getparam
     1783/    96D5 : 89 46 FE            	mov	word ptr [bp-2],ax
     1784/    96D8 :                     ;	?debug	L 643
-    1785/    96D8 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    1785/    96D8 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     1786/    96DD : 74 02               	je	L_211
     1787/    96DF :                     ;	?debug	L 644
     1788/    96DF : EB 43               	jmp	L_199
@@ -1803,22 +1803,22 @@
     1800/    96F2 : EB 30               	jmp	L_199
     1801/    96F4 :                     L_213:
     1802/    96F4 :                     ;	?debug	L 649
-    1803/    96F4 : FF 06 A8 06         	inc	word ptr _cip
+    1803/    96F4 : FF 06 A8 07         	inc	word ptr _cip
     1804/    96F8 :                     ;	?debug	L 650
-    1805/    96F8 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1805/    96F8 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1806/    96FC : 80 3F 13            	cmp	byte ptr [bx],19
     1807/    96FF : 75 0A               	jne	L_215
-    1808/    9701 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1808/    9701 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1809/    9705 : 80 7F 01 14         	cmp	byte ptr [bx+1],20
     1810/    9709 : 74 07               	je	L_214
     1811/    970B :                     L_215:
     1812/    970B :                     ;	?debug	L 651
-    1813/    970B : C6 06 CA 07 11      	mov	byte ptr _err,17
+    1813/    970B : C6 06 CA 08 11      	mov	byte ptr _err,17
     1814/    9710 :                     ;	?debug	L 652
     1815/    9710 : EB 12               	jmp	L_199
     1816/    9712 :                     L_214:
     1817/    9712 :                     ;	?debug	L 654
-    1818/    9712 : 83 06 A8 06 02      	add	word ptr _cip,2
+    1818/    9712 : 83 06 A8 07 02      	add	word ptr _cip,2
     1819/    9717 :                     ;	?debug	L 655
     1820/    9717 : E8 30 FC            	call	_getsize
     1821/    971A : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -1826,7 +1826,7 @@
     1823/    971D : EB 05               	jmp	L_199
     1824/    971F :                     L_216:
     1825/    971F :                     ;	?debug	L 659
-    1826/    971F : C6 06 CA 07 14      	mov	byte ptr _err,20
+    1826/    971F : C6 06 CA 08 14      	mov	byte ptr _err,20
     1827/    9724 :                     ;	?debug	L 660
     1828/    9724 :                     L_199:
     1829/    9724 :                     ;	?debug	L 662
@@ -1846,7 +1846,7 @@
     1843/    9731 : E8 92 FE            	call	_ivalue
     1844/    9734 : 89 46 FC            	mov	word ptr [bp-4],ax
     1845/    9737 :                     ;	?debug	L 670
-    1846/    9737 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    1846/    9737 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     1847/    973C : 74 05               	je	L_220
     1848/    973E :                     ;	?debug	L 671
     1849/    973E : B8 FF FF            	mov	ax,-1
@@ -1855,7 +1855,7 @@
     1852/    9743 : EB 54               	jmp	L_221
     1853/    9745 :                     L_223:
     1854/    9745 :                     ;	?debug	L 674
-    1855/    9745 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1855/    9745 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1856/    9749 : 8A 07               	mov	al,byte ptr [bx]
     1857/    974B : B4 00               	mov	ah,0
     1858/    974D : 3D 11 00            	cmp	ax,17
@@ -1865,7 +1865,7 @@
     1862/    9757 : EB 3B               	jmp	L_228
     1863/    9759 :                     L_225:
     1864/    9759 :                     ;	?debug	L 676
-    1865/    9759 : FF 06 A8 06         	inc	word ptr _cip
+    1865/    9759 : FF 06 A8 07         	inc	word ptr _cip
     1866/    975D :                     ;	?debug	L 677
     1867/    975D : E8 66 FE            	call	_ivalue
     1868/    9760 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -1877,7 +1877,7 @@
     1874/    976C : EB 2B               	jmp	L_224
     1875/    976E :                     L_226:
     1876/    976E :                     ;	?debug	L 681
-    1877/    976E : FF 06 A8 06         	inc	word ptr _cip
+    1877/    976E : FF 06 A8 07         	inc	word ptr _cip
     1878/    9772 :                     ;	?debug	L 682
     1879/    9772 : E8 51 FE            	call	_ivalue
     1880/    9775 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -1885,7 +1885,7 @@
     1882/    9778 : 83 7E FE 00         	cmp	word ptr [bp-2],0
     1883/    977C : 75 0A               	jne	L_227
     1884/    977E :                     ;	?debug	L 684
-    1885/    977E : C6 06 CA 07 01      	mov	byte ptr _err,1
+    1885/    977E : C6 06 CA 08 01      	mov	byte ptr _err,1
     1886/    9783 :                     ;	?debug	L 685
     1887/    9783 : B8 FF FF            	mov	ax,-1
     1888/    9786 : EB 13               	jmp	L_219
@@ -1921,7 +1921,7 @@
     1918/    97A5 : E8 83 FF            	call	_imul
     1919/    97A8 : 89 46 FC            	mov	word ptr [bp-4],ax
     1920/    97AB :                     ;	?debug	L 699
-    1921/    97AB : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    1921/    97AB : 80 3E CA 08 00      	cmp	byte ptr _err,0
     1922/    97B0 : 74 05               	je	L_230
     1923/    97B2 :                     ;	?debug	L 700
     1924/    97B2 : B8 FF FF            	mov	ax,-1
@@ -1930,7 +1930,7 @@
     1927/    97B7 : EB 3D               	jmp	L_231
     1928/    97B9 :                     L_233:
     1929/    97B9 :                     ;	?debug	L 703
-    1930/    97B9 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1930/    97B9 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1931/    97BD : 8A 07               	mov	al,byte ptr [bx]
     1932/    97BF : B4 00               	mov	ah,0
     1933/    97C1 : 3D 0F 00            	cmp	ax,15
@@ -1940,7 +1940,7 @@
     1937/    97CB : EB 24               	jmp	L_237
     1938/    97CD :                     L_235:
     1939/    97CD :                     ;	?debug	L 705
-    1940/    97CD : FF 06 A8 06         	inc	word ptr _cip
+    1940/    97CD : FF 06 A8 07         	inc	word ptr _cip
     1941/    97D1 :                     ;	?debug	L 706
     1942/    97D1 : E8 57 FF            	call	_imul
     1943/    97D4 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -1951,7 +1951,7 @@
     1948/    97DD : EB 17               	jmp	L_234
     1949/    97DF :                     L_236:
     1950/    97DF :                     ;	?debug	L 710
-    1951/    97DF : FF 06 A8 06         	inc	word ptr _cip
+    1951/    97DF : FF 06 A8 07         	inc	word ptr _cip
     1952/    97E3 :                     ;	?debug	L 711
     1953/    97E3 : E8 45 FF            	call	_imul
     1954/    97E6 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -1984,7 +1984,7 @@
     1981/    9802 : E8 9A FF            	call	_iplus
     1982/    9805 : 89 46 FC            	mov	word ptr [bp-4],ax
     1983/    9808 :                     ;	?debug	L 724
-    1984/    9808 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    1984/    9808 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     1985/    980D : 74 06               	je	L_239
     1986/    980F :                     ;	?debug	L 725
     1987/    980F : B8 FF FF            	mov	ax,-1
@@ -1993,7 +1993,7 @@
     1990/    9815 : E9 E2 00            	jmp	L_240
     1991/    9818 :                     L_242:
     1992/    9818 :                     ;	?debug	L 729
-    1993/    9818 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    1993/    9818 : 8B 1E A8 07         	mov	bx,word ptr _cip
     1994/    981C : 8A 07               	mov	al,byte ptr [bx]
     1995/    981E : B4 00               	mov	ah,0
     1996/    9820 : 2D 15 00            	sub	ax,21
@@ -2014,7 +2014,7 @@
     2011/    9840 :                     
     2012/    9840 :                     L_244:
     2013/    9840 :                     ;	?debug	L 731
-    2014/    9840 : FF 06 A8 06         	inc	word ptr _cip
+    2014/    9840 : FF 06 A8 07         	inc	word ptr _cip
     2015/    9844 :                     ;	?debug	L 732
     2016/    9844 : E8 58 FF            	call	_iplus
     2017/    9847 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -2032,7 +2032,7 @@
     2029/    985C : E9 9B 00            	jmp	L_243
     2030/    985F :                     L_245:
     2031/    985F :                     ;	?debug	L 736
-    2032/    985F : FF 06 A8 06         	inc	word ptr _cip
+    2032/    985F : FF 06 A8 07         	inc	word ptr _cip
     2033/    9863 :                     ;	?debug	L 737
     2034/    9863 : E8 39 FF            	call	_iplus
     2035/    9866 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -2050,7 +2050,7 @@
     2047/    987B : EB 7D               	jmp	L_243
     2048/    987D :                     L_246:
     2049/    987D :                     ;	?debug	L 741
-    2050/    987D : FF 06 A8 06         	inc	word ptr _cip
+    2050/    987D : FF 06 A8 07         	inc	word ptr _cip
     2051/    9881 :                     ;	?debug	L 742
     2052/    9881 : E8 1B FF            	call	_iplus
     2053/    9884 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -2068,7 +2068,7 @@
     2065/    9899 : EB 5F               	jmp	L_243
     2066/    989B :                     L_247:
     2067/    989B :                     ;	?debug	L 746
-    2068/    989B : FF 06 A8 06         	inc	word ptr _cip
+    2068/    989B : FF 06 A8 07         	inc	word ptr _cip
     2069/    989F :                     ;	?debug	L 747
     2070/    989F : E8 FD FE            	call	_iplus
     2071/    98A2 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -2086,7 +2086,7 @@
     2083/    98B7 : EB 41               	jmp	L_243
     2084/    98B9 :                     L_248:
     2085/    98B9 :                     ;	?debug	L 751
-    2086/    98B9 : FF 06 A8 06         	inc	word ptr _cip
+    2086/    98B9 : FF 06 A8 07         	inc	word ptr _cip
     2087/    98BD :                     ;	?debug	L 752
     2088/    98BD : E8 DF FE            	call	_iplus
     2089/    98C0 : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -2104,7 +2104,7 @@
     2101/    98D5 : EB 23               	jmp	L_243
     2102/    98D7 :                     L_249:
     2103/    98D7 :                     ;	?debug	L 756
-    2104/    98D7 : FF 06 A8 06         	inc	word ptr _cip
+    2104/    98D7 : FF 06 A8 07         	inc	word ptr _cip
     2105/    98DB :                     ;	?debug	L 757
     2106/    98DB : E8 C1 FE            	call	_iplus
     2107/    98DE : 89 46 FE            	mov	word ptr [bp-2],ax
@@ -2145,7 +2145,7 @@
     2142/    990C : E9 AC 00            	jmp	L_266
     2143/    990F :                     L_268:
     2144/    990F :                     ;	?debug	L 773
-    2145/    990F : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2145/    990F : 8B 1E A8 07         	mov	bx,word ptr _cip
     2146/    9913 : 8A 07               	mov	al,byte ptr [bx]
     2147/    9915 : B4 00               	mov	ah,0
     2148/    9917 : 3D 16 00            	cmp	ax,22
@@ -2155,17 +2155,17 @@
     2152/    9921 : EB 42               	jmp	L_276
     2153/    9923 :                     L_270:
     2154/    9923 :                     ;	?debug	L 775
-    2155/    9923 : FF 06 A8 06         	inc	word ptr _cip
+    2155/    9923 : FF 06 A8 07         	inc	word ptr _cip
     2156/    9927 :                     ;	?debug	L 776
-    2157/    9927 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2157/    9927 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2158/    992B : 8A 07               	mov	al,byte ptr [bx]
     2159/    992D : 88 46 FF            	mov	byte ptr [bp-1],al
-    2160/    9930 : FF 06 A8 06         	inc	word ptr _cip
+    2160/    9930 : FF 06 A8 07         	inc	word ptr _cip
     2161/    9934 : EB 0E               	jmp	L_271
     2162/    9936 :                     L_273:
     2163/    9936 :                     ;	?debug	L 778
-    2164/    9936 : 8B 1E A8 06         	mov	bx,word ptr _cip
-    2165/    993A : FF 06 A8 06         	inc	word ptr _cip
+    2164/    9936 : 8B 1E A8 07         	mov	bx,word ptr _cip
+    2165/    993A : FF 06 A8 07         	inc	word ptr _cip
     2166/    993E : FF 37               	push	word ptr [bx]
     2167/    9940 : E8 1B F3            	call	_c_putch
     2168/    9943 : 59                  	pop	cx
@@ -2180,12 +2180,12 @@
     2177/    994E : EB 2F               	jmp	L_269
     2178/    9950 :                     L_274:
     2179/    9950 :                     ;	?debug	L 781
-    2180/    9950 : FF 06 A8 06         	inc	word ptr _cip
+    2180/    9950 : FF 06 A8 07         	inc	word ptr _cip
     2181/    9954 :                     ;	?debug	L 782
     2182/    9954 : E8 A5 FE            	call	_iexp
     2183/    9957 : 89 46 FC            	mov	word ptr [bp-4],ax
     2184/    995A :                     ;	?debug	L 783
-    2185/    995A : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2185/    995A : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2186/    995F : 74 02               	je	L_275
     2187/    9961 : EB 70               	jmp	L_265
     2188/    9963 :                     L_275:
@@ -2196,7 +2196,7 @@
     2193/    9965 : E8 94 FE            	call	_iexp
     2194/    9968 : 89 46 FA            	mov	word ptr [bp-6],ax
     2195/    996B :                     ;	?debug	L 788
-    2196/    996B : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2196/    996B : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2197/    9970 : 74 02               	je	L_277
     2198/    9972 : EB 5F               	jmp	L_265
     2199/    9974 :                     L_277:
@@ -2209,16 +2209,16 @@
     2206/    997F :                     ;	?debug	L 791
     2207/    997F :                     L_269:
     2208/    997F :                     ;	?debug	L 794
-    2209/    997F : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2209/    997F : 8B 1E A8 07         	mov	bx,word ptr _cip
     2210/    9983 : 80 3F 0D            	cmp	byte ptr [bx],13
     2211/    9986 : 75 1A               	jne	L_278
     2212/    9988 :                     ;	?debug	L 795
-    2213/    9988 : FF 06 A8 06         	inc	word ptr _cip
+    2213/    9988 : FF 06 A8 07         	inc	word ptr _cip
     2214/    998C :                     ;	?debug	L 796
-    2215/    998C : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2215/    998C : 8B 1E A8 07         	mov	bx,word ptr _cip
     2216/    9990 : 80 3F 0E            	cmp	byte ptr [bx],14
     2217/    9993 : 74 09               	je	L_280
-    2218/    9995 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2218/    9995 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2219/    9999 : 80 3F 26            	cmp	byte ptr [bx],38
     2220/    999C : 75 02               	jne	L_279
     2221/    999E :                     L_280:
@@ -2228,23 +2228,23 @@
     2225/    99A0 : EB 19               	jmp	L_281
     2226/    99A2 :                     L_278:
     2227/    99A2 :                     ;	?debug	L 800
-    2228/    99A2 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2228/    99A2 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2229/    99A6 : 80 3F 0E            	cmp	byte ptr [bx],14
     2230/    99A9 : 74 10               	je	L_282
-    2231/    99AB : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2231/    99AB : 8B 1E A8 07         	mov	bx,word ptr _cip
     2232/    99AF : 80 3F 26            	cmp	byte ptr [bx],38
     2233/    99B2 : 74 07               	je	L_282
     2234/    99B4 :                     ;	?debug	L 801
-    2235/    99B4 : C6 06 CA 07 14      	mov	byte ptr _err,20
+    2235/    99B4 : C6 06 CA 08 14      	mov	byte ptr _err,20
     2236/    99B9 : EB 18               	jmp	L_265
     2237/    99BB :                     L_282:
     2238/    99BB :                     L_281:
     2239/    99BB :                     L_266:
     2240/    99BB :                     ;	?debug	L 772
-    2241/    99BB : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2241/    99BB : 8B 1E A8 07         	mov	bx,word ptr _cip
     2242/    99BF : 80 3F 0E            	cmp	byte ptr [bx],14
     2243/    99C2 : 74 0C               	je	L_283
-    2244/    99C4 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2244/    99C4 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2245/    99C8 : 80 3F 26            	cmp	byte ptr [bx],38
     2246/    99CB : 74 03               	je	L_284
     2247/    99CD : E9 3F FF            	jmp	L_268
@@ -2270,21 +2270,21 @@
     2267/    99E0 :                     ;	?debug	L 817
     2268/    99E0 : C6 46 FF 01         	mov	byte ptr [bp-1],1
     2269/    99E4 :                     ;	?debug	L 819
-    2270/    99E4 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2270/    99E4 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2271/    99E8 : 80 3F 25            	cmp	byte ptr [bx],37
     2272/    99EB : 75 2F               	jne	L_289
     2273/    99ED :                     ;	?debug	L 820
-    2274/    99ED : FF 06 A8 06         	inc	word ptr _cip
+    2274/    99ED : FF 06 A8 07         	inc	word ptr _cip
     2275/    99F1 :                     ;	?debug	L 821
-    2276/    99F1 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2276/    99F1 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2277/    99F5 : 8A 07               	mov	al,byte ptr [bx]
     2278/    99F7 : 88 46 FE            	mov	byte ptr [bp-2],al
-    2279/    99FA : FF 06 A8 06         	inc	word ptr _cip
+    2279/    99FA : FF 06 A8 07         	inc	word ptr _cip
     2280/    99FE : EB 0E               	jmp	L_290
     2281/    9A00 :                     L_292:
     2282/    9A00 :                     ;	?debug	L 823
-    2283/    9A00 : 8B 1E A8 06         	mov	bx,word ptr _cip
-    2284/    9A04 : FF 06 A8 06         	inc	word ptr _cip
+    2283/    9A00 : 8B 1E A8 07         	mov	bx,word ptr _cip
+    2284/    9A04 : FF 06 A8 07         	inc	word ptr _cip
     2285/    9A08 : FF 37               	push	word ptr [bx]
     2286/    9A0A : E8 51 F2            	call	_c_putch
     2287/    9A0D : 59                  	pop	cx
@@ -2299,7 +2299,7 @@
     2296/    9A18 : C6 46 FF 00         	mov	byte ptr [bp-1],0
     2297/    9A1C :                     L_289:
     2298/    9A1C :                     ;	?debug	L 827
-    2299/    9A1C : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2299/    9A1C : 8B 1E A8 07         	mov	bx,word ptr _cip
     2300/    9A20 : 8A 07               	mov	al,byte ptr [bx]
     2301/    9A22 : B4 00               	mov	ah,0
     2302/    9A24 : 3D 1B 00            	cmp	ax,27
@@ -2309,12 +2309,12 @@
     2306/    9A2E : E9 A5 00            	jmp	L_302
     2307/    9A31 :                     L_294:
     2308/    9A31 :                     ;	?debug	L 829
-    2309/    9A31 : FF 06 A8 06         	inc	word ptr _cip
+    2309/    9A31 : FF 06 A8 07         	inc	word ptr _cip
     2310/    9A35 :                     ;	?debug	L 830
     2311/    9A35 : 80 7E FF 00         	cmp	byte ptr [bp-1],0
     2312/    9A39 : 74 14               	je	L_295
     2313/    9A3B :                     ;	?debug	L 831
-    2314/    9A3B : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2314/    9A3B : 8B 1E A8 07         	mov	bx,word ptr _cip
     2315/    9A3F : 8A 07               	mov	al,byte ptr [bx]
     2316/    9A41 : 04 41               	add	al,65
     2317/    9A43 : 50                  	push	ax
@@ -2330,29 +2330,29 @@
     2327/    9A4F : E8 BA F4            	call	_getnum
     2328/    9A52 : 89 46 FA            	mov	word ptr [bp-6],ax
     2329/    9A55 :                     ;	?debug	L 835
-    2330/    9A55 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2330/    9A55 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2331/    9A5A : 74 03               	je	L_296
     2332/    9A5C : E9 A9 00            	jmp	L_285
     2333/    9A5F :                     L_296:
     2334/    9A5F :                     ;	?debug	L 837
     2335/    9A5F : 8B 46 FA            	mov	ax,word ptr [bp-6]
-    2336/    9A62 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2336/    9A62 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2337/    9A66 : 8A 17               	mov	dl,byte ptr [bx]
     2338/    9A68 : B6 00               	mov	dh,0
     2339/    9A6A : 8B DA               	mov	bx,dx
     2340/    9A6C : D1 E3               	shl	bx,1
-    2341/    9A6E : 89 87 FB 07         	mov	word ptr _var[bx],ax
-    2342/    9A72 : FF 06 A8 06         	inc	word ptr _cip
+    2341/    9A6E : 89 87 FB 08         	mov	word ptr _var[bx],ax
+    2342/    9A72 : FF 06 A8 07         	inc	word ptr _cip
     2343/    9A76 :                     ;	?debug	L 838
     2344/    9A76 : EB 65               	jmp	L_293
     2345/    9A78 :                     L_297:
     2346/    9A78 :                     ;	?debug	L 840
-    2347/    9A78 : FF 06 A8 06         	inc	word ptr _cip
+    2347/    9A78 : FF 06 A8 07         	inc	word ptr _cip
     2348/    9A7C :                     ;	?debug	L 841
     2349/    9A7C : E8 FD FA            	call	_getparam
     2350/    9A7F : 89 46 FC            	mov	word ptr [bp-4],ax
     2351/    9A82 :                     ;	?debug	L 842
-    2352/    9A82 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2352/    9A82 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2353/    9A87 : 74 02               	je	L_298
     2354/    9A89 : EB 7D               	jmp	L_285
     2355/    9A8B :                     L_298:
@@ -2360,7 +2360,7 @@
     2357/    9A8B : 83 7E FC 40         	cmp	word ptr [bp-4],64
     2358/    9A8F : 7C 07               	jl	L_299
     2359/    9A91 :                     ;	?debug	L 845
-    2360/    9A91 : C6 06 CA 07 03      	mov	byte ptr _err,3
+    2360/    9A91 : C6 06 CA 08 03      	mov	byte ptr _err,3
     2361/    9A96 : EB 70               	jmp	L_285
     2362/    9A98 :                     L_299:
     2363/    9A98 :                     ;	?debug	L 848
@@ -2388,7 +2388,7 @@
     2385/    9AB9 : E8 50 F4            	call	_getnum
     2386/    9ABC : 89 46 FA            	mov	word ptr [bp-6],ax
     2387/    9ABF :                     ;	?debug	L 854
-    2388/    9ABF : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2388/    9ABF : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2389/    9AC4 : 74 02               	je	L_301
     2390/    9AC6 : EB 40               	jmp	L_285
     2391/    9AC8 :                     L_301:
@@ -2396,16 +2396,16 @@
     2393/    9AC8 : 8B 46 FA            	mov	ax,word ptr [bp-6]
     2394/    9ACB : 8B 5E FC            	mov	bx,word ptr [bp-4]
     2395/    9ACE : D1 E3               	shl	bx,1
-    2396/    9AD0 : 89 87 4A 07         	mov	word ptr _arr[bx],ax
+    2396/    9AD0 : 89 87 4A 08         	mov	word ptr _arr[bx],ax
     2397/    9AD4 :                     ;	?debug	L 857
     2398/    9AD4 : EB 07               	jmp	L_293
     2399/    9AD6 :                     L_302:
     2400/    9AD6 :                     ;	?debug	L 859
-    2401/    9AD6 : C6 06 CA 07 14      	mov	byte ptr _err,20
+    2401/    9AD6 : C6 06 CA 08 14      	mov	byte ptr _err,20
     2402/    9ADB : EB 2B               	jmp	L_285
     2403/    9ADD :                     L_293:
     2404/    9ADD :                     ;	?debug	L 863
-    2405/    9ADD : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2405/    9ADD : 8B 1E A8 07         	mov	bx,word ptr _cip
     2406/    9AE1 : 8A 07               	mov	al,byte ptr [bx]
     2407/    9AE3 : B4 00               	mov	ah,0
     2408/    9AE5 : 3D 0D 00            	cmp	ax,13
@@ -2417,7 +2417,7 @@
     2414/    9AF4 : EB 08               	jmp	L_307
     2415/    9AF6 :                     L_304:
     2416/    9AF6 :                     ;	?debug	L 865
-    2417/    9AF6 : FF 06 A8 06         	inc	word ptr _cip
+    2417/    9AF6 : FF 06 A8 07         	inc	word ptr _cip
     2418/    9AFA :                     ;	?debug	L 866
     2419/    9AFA : EB 09               	jmp	L_303
     2420/    9AFC :                     L_305:
@@ -2425,7 +2425,7 @@
     2422/    9AFC : EB 0A               	jmp	L_285
     2423/    9AFE :                     L_307:
     2424/    9AFE :                     ;	?debug	L 871
-    2425/    9AFE : C6 06 CA 07 14      	mov	byte ptr _err,20
+    2425/    9AFE : C6 06 CA 08 14      	mov	byte ptr _err,20
     2426/    9B03 : EB 03               	jmp	L_285
     2427/    9B05 :                     L_303:
     2428/    9B05 :                     L_286:
@@ -2444,26 +2444,26 @@
     2441/    9B0D : 8B EC               	mov	bp,sp
     2442/    9B0F : 83 EC 04            	sub	sp,4
     2443/    9B12 :                     ;	?debug	L 882
-    2444/    9B12 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2444/    9B12 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2445/    9B16 : 8A 07               	mov	al,byte ptr [bx]
     2446/    9B18 : B4 00               	mov	ah,0
     2447/    9B1A : 89 46 FE            	mov	word ptr [bp-2],ax
-    2448/    9B1D : FF 06 A8 06         	inc	word ptr _cip
+    2448/    9B1D : FF 06 A8 07         	inc	word ptr _cip
     2449/    9B21 :                     ;	?debug	L 883
-    2450/    9B21 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2450/    9B21 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2451/    9B25 : 80 3F 18            	cmp	byte ptr [bx],24
     2452/    9B28 : 74 07               	je	L_309
     2453/    9B2A :                     ;	?debug	L 884
-    2454/    9B2A : C6 06 CA 07 12      	mov	byte ptr _err,18
+    2454/    9B2A : C6 06 CA 08 12      	mov	byte ptr _err,18
     2455/    9B2F : EB 1F               	jmp	L_308
     2456/    9B31 :                     L_309:
     2457/    9B31 :                     ;	?debug	L 887
-    2458/    9B31 : FF 06 A8 06         	inc	word ptr _cip
+    2458/    9B31 : FF 06 A8 07         	inc	word ptr _cip
     2459/    9B35 :                     ;	?debug	L 889
     2460/    9B35 : E8 C4 FC            	call	_iexp
     2461/    9B38 : 89 46 FC            	mov	word ptr [bp-4],ax
     2462/    9B3B :                     ;	?debug	L 890
-    2463/    9B3B : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2463/    9B3B : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2464/    9B40 : 74 02               	je	L_310
     2465/    9B42 : EB 0C               	jmp	L_308
     2466/    9B44 :                     L_310:
@@ -2471,7 +2471,7 @@
     2468/    9B44 : 8B 46 FC            	mov	ax,word ptr [bp-4]
     2469/    9B47 : 8B 5E FE            	mov	bx,word ptr [bp-2]
     2470/    9B4A : D1 E3               	shl	bx,1
-    2471/    9B4C : 89 87 FB 07         	mov	word ptr _var[bx],ax
+    2471/    9B4C : 89 87 FB 08         	mov	word ptr _var[bx],ax
     2472/    9B50 :                     L_308:
     2473/    9B50 :                     ;	?debug	L 894
     2474/    9B50 : 8B E5               	mov	sp,bp
@@ -2487,7 +2487,7 @@
     2484/    9B5A : E8 1F FA            	call	_getparam
     2485/    9B5D : 89 46 FE            	mov	word ptr [bp-2],ax
     2486/    9B60 :                     ;	?debug	L 902
-    2487/    9B60 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2487/    9B60 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2488/    9B65 : 74 02               	je	L_312
     2489/    9B67 : EB 3C               	jmp	L_311
     2490/    9B69 :                     L_312:
@@ -2495,24 +2495,24 @@
     2492/    9B69 : 83 7E FE 40         	cmp	word ptr [bp-2],64
     2493/    9B6D : 7C 07               	jl	L_313
     2494/    9B6F :                     ;	?debug	L 906
-    2495/    9B6F : C6 06 CA 07 03      	mov	byte ptr _err,3
+    2495/    9B6F : C6 06 CA 08 03      	mov	byte ptr _err,3
     2496/    9B74 : EB 2F               	jmp	L_311
     2497/    9B76 :                     L_313:
     2498/    9B76 :                     ;	?debug	L 910
-    2499/    9B76 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2499/    9B76 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2500/    9B7A : 80 3F 18            	cmp	byte ptr [bx],24
     2501/    9B7D : 74 07               	je	L_314
     2502/    9B7F :                     ;	?debug	L 911
-    2503/    9B7F : C6 06 CA 07 12      	mov	byte ptr _err,18
+    2503/    9B7F : C6 06 CA 08 12      	mov	byte ptr _err,18
     2504/    9B84 : EB 1F               	jmp	L_311
     2505/    9B86 :                     L_314:
     2506/    9B86 :                     ;	?debug	L 914
-    2507/    9B86 : FF 06 A8 06         	inc	word ptr _cip
+    2507/    9B86 : FF 06 A8 07         	inc	word ptr _cip
     2508/    9B8A :                     ;	?debug	L 916
     2509/    9B8A : E8 6F FC            	call	_iexp
     2510/    9B8D : 89 46 FC            	mov	word ptr [bp-4],ax
     2511/    9B90 :                     ;	?debug	L 917
-    2512/    9B90 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2512/    9B90 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2513/    9B95 : 74 02               	je	L_315
     2514/    9B97 : EB 0C               	jmp	L_311
     2515/    9B99 :                     L_315:
@@ -2520,7 +2520,7 @@
     2517/    9B99 : 8B 46 FC            	mov	ax,word ptr [bp-4]
     2518/    9B9C : 8B 5E FE            	mov	bx,word ptr [bp-2]
     2519/    9B9F : D1 E3               	shl	bx,1
-    2520/    9BA1 : 89 87 4A 07         	mov	word ptr _arr[bx],ax
+    2520/    9BA1 : 89 87 4A 08         	mov	word ptr _arr[bx],ax
     2521/    9BA5 :                     L_311:
     2522/    9BA5 :                     ;	?debug	L 921
     2523/    9BA5 : 8B E5               	mov	sp,bp
@@ -2530,7 +2530,7 @@
     2527/    9BA9 :                     ;	?debug	L 924
     2528/    9BA9 :                     _ilet:
     2529/    9BA9 :                     ;	?debug	L 925
-    2530/    9BA9 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2530/    9BA9 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2531/    9BAD : 8A 07               	mov	al,byte ptr [bx]
     2532/    9BAF : B4 00               	mov	ah,0
     2533/    9BB1 : 3D 1B 00            	cmp	ax,27
@@ -2540,21 +2540,21 @@
     2537/    9BBB : EB 12               	jmp	L_320
     2538/    9BBD :                     L_318:
     2539/    9BBD :                     ;	?debug	L 927
-    2540/    9BBD : FF 06 A8 06         	inc	word ptr _cip
+    2540/    9BBD : FF 06 A8 07         	inc	word ptr _cip
     2541/    9BC1 :                     ;	?debug	L 928
     2542/    9BC1 : E8 48 FF            	call	_ivar
     2543/    9BC4 :                     ;	?debug	L 929
     2544/    9BC4 : EB 0E               	jmp	L_317
     2545/    9BC6 :                     L_319:
     2546/    9BC6 :                     ;	?debug	L 931
-    2547/    9BC6 : FF 06 A8 06         	inc	word ptr _cip
+    2547/    9BC6 : FF 06 A8 07         	inc	word ptr _cip
     2548/    9BCA :                     ;	?debug	L 932
     2549/    9BCA : E8 87 FF            	call	_iarray
     2550/    9BCD :                     ;	?debug	L 933
     2551/    9BCD : EB 05               	jmp	L_317
     2552/    9BCF :                     L_320:
     2553/    9BCF :                     ;	?debug	L 935
-    2554/    9BCF : C6 06 CA 07 0E      	mov	byte ptr _err,14
+    2554/    9BCF : C6 06 CA 08 0E      	mov	byte ptr _err,14
     2555/    9BD4 :                     ;	?debug	L 936
     2556/    9BD4 :                     L_317:
     2557/    9BD4 :                     L_316:
@@ -2578,14 +2578,14 @@
     2575/    9BE9 : 3C 1B               	cmp	al,27
     2576/    9BEB : 75 0A               	jne	L_326
     2577/    9BED :                     ;	?debug	L 951
-    2578/    9BED : C6 06 CA 07 16      	mov	byte ptr _err,22
+    2578/    9BED : C6 06 CA 08 16      	mov	byte ptr _err,22
     2579/    9BF2 :                     ;	?debug	L 952
     2580/    9BF2 : 33 C0               	xor	ax,ax
     2581/    9BF4 : E9 18 04            	jmp	L_321
     2582/    9BF7 :                     L_326:
     2583/    9BF7 :                     L_325:
     2584/    9BF7 :                     ;	?debug	L 955
-    2585/    9BF7 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2585/    9BF7 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2586/    9BFB : 8A 07               	mov	al,byte ptr [bx]
     2587/    9BFD : B4 00               	mov	ah,0
     2588/    9BFF : 3D 24 00            	cmp	ax,36
@@ -2636,12 +2636,12 @@
     2633/    9C58 : AD 9F               	dw	L_366
     2634/    9C5A :                     L_328:
     2635/    9C5A :                     ;	?debug	L 958
-    2636/    9C5A : FF 06 A8 06         	inc	word ptr _cip
+    2636/    9C5A : FF 06 A8 07         	inc	word ptr _cip
     2637/    9C5E :                     ;	?debug	L 959
     2638/    9C5E : E8 9B FB            	call	_iexp
     2639/    9C61 : 89 46 F6            	mov	word ptr [bp-10],ax
     2640/    9C64 :                     ;	?debug	L 960
-    2641/    9C64 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2641/    9C64 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2642/    9C69 : 74 03               	je	L_329
     2643/    9C6B :                     ;	?debug	L 961
     2644/    9C6B : E9 7E 03            	jmp	L_327
@@ -2658,26 +2658,26 @@
     2655/    9C7C : 3B 46 F6            	cmp	ax,word ptr [bp-10]
     2656/    9C7F : 74 08               	je	L_330
     2657/    9C81 :                     ;	?debug	L 964
-    2658/    9C81 : C6 06 CA 07 10      	mov	byte ptr _err,16
+    2658/    9C81 : C6 06 CA 08 10      	mov	byte ptr _err,16
     2659/    9C86 :                     ;	?debug	L 965
     2660/    9C86 : E9 63 03            	jmp	L_327
     2661/    9C89 :                     L_330:
     2662/    9C89 :                     ;	?debug	L 968
-    2663/    9C89 : 89 36 A6 06         	mov	word ptr _clp,si
+    2663/    9C89 : 89 36 A6 07         	mov	word ptr _clp,si
     2664/    9C8D :                     ;	?debug	L 969
-    2665/    9C8D : A1 A6 06            	mov	ax,word ptr _clp
+    2665/    9C8D : A1 A6 07            	mov	ax,word ptr _clp
     2666/    9C90 : 05 03 00            	add	ax,3
-    2667/    9C93 : A3 A8 06            	mov	word ptr _cip,ax
+    2667/    9C93 : A3 A8 07            	mov	word ptr _cip,ax
     2668/    9C96 :                     ;	?debug	L 970
     2669/    9C96 : E9 53 03            	jmp	L_327
     2670/    9C99 :                     L_331:
     2671/    9C99 :                     ;	?debug	L 973
-    2672/    9C99 : FF 06 A8 06         	inc	word ptr _cip
+    2672/    9C99 : FF 06 A8 07         	inc	word ptr _cip
     2673/    9C9D :                     ;	?debug	L 974
     2674/    9C9D : E8 5C FB            	call	_iexp
     2675/    9CA0 : 89 46 F6            	mov	word ptr [bp-10],ax
     2676/    9CA3 :                     ;	?debug	L 975
-    2677/    9CA3 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2677/    9CA3 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2678/    9CA8 : 74 03               	je	L_332
     2679/    9CAA :                     ;	?debug	L 976
     2680/    9CAA : E9 3F 03            	jmp	L_327
@@ -2694,118 +2694,118 @@
     2691/    9CBB : 3B 46 F6            	cmp	ax,word ptr [bp-10]
     2692/    9CBE : 74 08               	je	L_333
     2693/    9CC0 :                     ;	?debug	L 979
-    2694/    9CC0 : C6 06 CA 07 10      	mov	byte ptr _err,16
+    2694/    9CC0 : C6 06 CA 08 10      	mov	byte ptr _err,16
     2695/    9CC5 :                     ;	?debug	L 980
     2696/    9CC5 : E9 24 03            	jmp	L_327
     2697/    9CC8 :                     L_333:
     2698/    9CC8 :                     ;	?debug	L 985
-    2699/    9CC8 : 80 3E 2F 08 06      	cmp	byte ptr _gstki,6
+    2699/    9CC8 : 80 3E 2F 09 06      	cmp	byte ptr _gstki,6
     2700/    9CCD : 72 08               	jb	L_334
     2701/    9CCF :                     ;	?debug	L 986
-    2702/    9CCF : C6 06 CA 07 06      	mov	byte ptr _err,6
+    2702/    9CCF : C6 06 CA 08 06      	mov	byte ptr _err,6
     2703/    9CD4 :                     ;	?debug	L 987
     2704/    9CD4 : E9 15 03            	jmp	L_327
     2705/    9CD7 :                     L_334:
     2706/    9CD7 :                     ;	?debug	L 989
-    2707/    9CD7 : A1 A6 06            	mov	ax,word ptr _clp
-    2708/    9CDA : 8A 16 2F 08         	mov	dl,byte ptr _gstki
+    2707/    9CD7 : A1 A6 07            	mov	ax,word ptr _clp
+    2708/    9CDA : 8A 16 2F 09         	mov	dl,byte ptr _gstki
     2709/    9CDE : B6 00               	mov	dh,0
     2710/    9CE0 : 8B DA               	mov	bx,dx
     2711/    9CE2 : D1 E3               	shl	bx,1
-    2712/    9CE4 : 89 87 CB 07         	mov	word ptr _gstk[bx],ax
-    2713/    9CE8 : FE 06 2F 08         	inc	byte ptr _gstki
+    2712/    9CE4 : 89 87 CB 08         	mov	word ptr _gstk[bx],ax
+    2713/    9CE8 : FE 06 2F 09         	inc	byte ptr _gstki
     2714/    9CEC :                     ;	?debug	L 990
-    2715/    9CEC : A1 A8 06            	mov	ax,word ptr _cip
-    2716/    9CEF : 8A 16 2F 08         	mov	dl,byte ptr _gstki
+    2715/    9CEC : A1 A8 07            	mov	ax,word ptr _cip
+    2716/    9CEF : 8A 16 2F 09         	mov	dl,byte ptr _gstki
     2717/    9CF3 : B6 00               	mov	dh,0
     2718/    9CF5 : 8B DA               	mov	bx,dx
     2719/    9CF7 : D1 E3               	shl	bx,1
-    2720/    9CF9 : 89 87 CB 07         	mov	word ptr _gstk[bx],ax
-    2721/    9CFD : FE 06 2F 08         	inc	byte ptr _gstki
+    2720/    9CF9 : 89 87 CB 08         	mov	word ptr _gstk[bx],ax
+    2721/    9CFD : FE 06 2F 09         	inc	byte ptr _gstki
     2722/    9D01 :                     ;	?debug	L 992
-    2723/    9D01 : A0 30 08            	mov	al,byte ptr _lstki
+    2723/    9D01 : A0 30 09            	mov	al,byte ptr _lstki
     2724/    9D04 : B4 00               	mov	ah,0
-    2725/    9D06 : 8A 16 2F 08         	mov	dl,byte ptr _gstki
+    2725/    9D06 : 8A 16 2F 09         	mov	dl,byte ptr _gstki
     2726/    9D0A : B6 00               	mov	dh,0
     2727/    9D0C : 8B DA               	mov	bx,dx
     2728/    9D0E : D1 E3               	shl	bx,1
-    2729/    9D10 : 89 87 CB 07         	mov	word ptr _gstk[bx],ax
-    2730/    9D14 : FE 06 2F 08         	inc	byte ptr _gstki
+    2729/    9D10 : 89 87 CB 08         	mov	word ptr _gstk[bx],ax
+    2730/    9D14 : FE 06 2F 09         	inc	byte ptr _gstki
     2731/    9D18 :                     ;	?debug	L 994
-    2732/    9D18 : 89 36 A6 06         	mov	word ptr _clp,si
+    2732/    9D18 : 89 36 A6 07         	mov	word ptr _clp,si
     2733/    9D1C :                     ;	?debug	L 995
-    2734/    9D1C : A1 A6 06            	mov	ax,word ptr _clp
+    2734/    9D1C : A1 A6 07            	mov	ax,word ptr _clp
     2735/    9D1F : 05 03 00            	add	ax,3
-    2736/    9D22 : A3 A8 06            	mov	word ptr _cip,ax
+    2736/    9D22 : A3 A8 07            	mov	word ptr _cip,ax
     2737/    9D25 :                     ;	?debug	L 996
     2738/    9D25 : E9 C4 02            	jmp	L_327
     2739/    9D28 :                     L_335:
     2740/    9D28 :                     ;	?debug	L 1000
-    2741/    9D28 : 80 3E 2F 08 03      	cmp	byte ptr _gstki,3
+    2741/    9D28 : 80 3E 2F 09 03      	cmp	byte ptr _gstki,3
     2742/    9D2D : 73 08               	jae	L_336
     2743/    9D2F :                     ;	?debug	L 1001
-    2744/    9D2F : C6 06 CA 07 07      	mov	byte ptr _err,7
+    2744/    9D2F : C6 06 CA 08 07      	mov	byte ptr _err,7
     2745/    9D34 :                     ;	?debug	L 1002
     2746/    9D34 : E9 B5 02            	jmp	L_327
     2747/    9D37 :                     L_336:
     2748/    9D37 :                     ;	?debug	L 1005
-    2749/    9D37 : FE 0E 2F 08         	dec	byte ptr _gstki
-    2750/    9D3B : A0 2F 08            	mov	al,byte ptr _gstki
+    2749/    9D37 : FE 0E 2F 09         	dec	byte ptr _gstki
+    2750/    9D3B : A0 2F 09            	mov	al,byte ptr _gstki
     2751/    9D3E : B4 00               	mov	ah,0
     2752/    9D40 : 8B D8               	mov	bx,ax
     2753/    9D42 : D1 E3               	shl	bx,1
-    2754/    9D44 : 8A 87 CB 07         	mov	al,byte ptr _gstk[bx]
-    2755/    9D48 : A2 30 08            	mov	byte ptr _lstki,al
+    2754/    9D44 : 8A 87 CB 08         	mov	al,byte ptr _gstk[bx]
+    2755/    9D48 : A2 30 09            	mov	byte ptr _lstki,al
     2756/    9D4B :                     ;	?debug	L 1007
-    2757/    9D4B : FE 0E 2F 08         	dec	byte ptr _gstki
-    2758/    9D4F : A0 2F 08            	mov	al,byte ptr _gstki
+    2757/    9D4B : FE 0E 2F 09         	dec	byte ptr _gstki
+    2758/    9D4F : A0 2F 09            	mov	al,byte ptr _gstki
     2759/    9D52 : B4 00               	mov	ah,0
     2760/    9D54 : 8B D8               	mov	bx,ax
     2761/    9D56 : D1 E3               	shl	bx,1
-    2762/    9D58 : 8B 87 CB 07         	mov	ax,word ptr _gstk[bx]
-    2763/    9D5C : A3 A8 06            	mov	word ptr _cip,ax
+    2762/    9D58 : 8B 87 CB 08         	mov	ax,word ptr _gstk[bx]
+    2763/    9D5C : A3 A8 07            	mov	word ptr _cip,ax
     2764/    9D5F :                     ;	?debug	L 1008
-    2765/    9D5F : FE 0E 2F 08         	dec	byte ptr _gstki
-    2766/    9D63 : A0 2F 08            	mov	al,byte ptr _gstki
+    2765/    9D5F : FE 0E 2F 09         	dec	byte ptr _gstki
+    2766/    9D63 : A0 2F 09            	mov	al,byte ptr _gstki
     2767/    9D66 : B4 00               	mov	ah,0
     2768/    9D68 : 8B D8               	mov	bx,ax
     2769/    9D6A : D1 E3               	shl	bx,1
-    2770/    9D6C : 8B 87 CB 07         	mov	ax,word ptr _gstk[bx]
-    2771/    9D70 : A3 A6 06            	mov	word ptr _clp,ax
+    2770/    9D6C : 8B 87 CB 08         	mov	ax,word ptr _gstk[bx]
+    2771/    9D70 : A3 A6 07            	mov	word ptr _clp,ax
     2772/    9D73 :                     ;	?debug	L 1009
     2773/    9D73 : E9 76 02            	jmp	L_327
     2774/    9D76 :                     L_337:
     2775/    9D76 :                     ;	?debug	L 1012
-    2776/    9D76 : FF 06 A8 06         	inc	word ptr _cip
+    2776/    9D76 : FF 06 A8 07         	inc	word ptr _cip
     2777/    9D7A :                     ;	?debug	L 1014
-    2778/    9D7A : 8B 1E A8 06         	mov	bx,word ptr _cip
-    2779/    9D7E : FF 06 A8 06         	inc	word ptr _cip
+    2778/    9D7A : 8B 1E A8 07         	mov	bx,word ptr _cip
+    2779/    9D7E : FF 06 A8 07         	inc	word ptr _cip
     2780/    9D82 : 80 3F 24            	cmp	byte ptr [bx],36
     2781/    9D85 : 74 08               	je	L_338
     2782/    9D87 :                     ;	?debug	L 1015
-    2783/    9D87 : C6 06 CA 07 0C      	mov	byte ptr _err,12
+    2783/    9D87 : C6 06 CA 08 0C      	mov	byte ptr _err,12
     2784/    9D8C :                     ;	?debug	L 1016
     2785/    9D8C : E9 5D 02            	jmp	L_327
     2786/    9D8F :                     L_338:
     2787/    9D8F :                     ;	?debug	L 1019
-    2788/    9D8F : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2788/    9D8F : 8B 1E A8 07         	mov	bx,word ptr _cip
     2789/    9D93 : 8A 07               	mov	al,byte ptr [bx]
     2790/    9D95 : B4 00               	mov	ah,0
     2791/    9D97 : 89 46 F8            	mov	word ptr [bp-8],ax
     2792/    9D9A :                     ;	?debug	L 1020
     2793/    9D9A : E8 6F FD            	call	_ivar
     2794/    9D9D :                     ;	?debug	L 1021
-    2795/    9D9D : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    2795/    9D9D : 80 3E CA 08 00      	cmp	byte ptr _err,0
     2796/    9DA2 : 74 03               	je	L_339
     2797/    9DA4 :                     ;	?debug	L 1022
     2798/    9DA4 : E9 45 02            	jmp	L_327
     2799/    9DA7 :                     L_339:
     2800/    9DA7 :                     ;	?debug	L 1024
-    2801/    9DA7 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2801/    9DA7 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2802/    9DAB : 80 3F 04            	cmp	byte ptr [bx],4
     2803/    9DAE : 75 0C               	jne	L_340
     2804/    9DB0 :                     ;	?debug	L 1025
-    2805/    9DB0 : FF 06 A8 06         	inc	word ptr _cip
+    2805/    9DB0 : FF 06 A8 07         	inc	word ptr _cip
     2806/    9DB4 :                     ;	?debug	L 1026
     2807/    9DB4 : E8 45 FA            	call	_iexp
     2808/    9DB7 : 89 46 FA            	mov	word ptr [bp-6],ax
@@ -2813,16 +2813,16 @@
     2810/    9DBA : EB 08               	jmp	L_341
     2811/    9DBC :                     L_340:
     2812/    9DBC :                     ;	?debug	L 1029
-    2813/    9DBC : C6 06 CA 07 0D      	mov	byte ptr _err,13
+    2813/    9DBC : C6 06 CA 08 0D      	mov	byte ptr _err,13
     2814/    9DC1 :                     ;	?debug	L 1030
     2815/    9DC1 : E9 28 02            	jmp	L_327
     2816/    9DC4 :                     L_341:
     2817/    9DC4 :                     ;	?debug	L 1033
-    2818/    9DC4 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    2818/    9DC4 : 8B 1E A8 07         	mov	bx,word ptr _cip
     2819/    9DC8 : 80 3F 05            	cmp	byte ptr [bx],5
     2820/    9DCB : 75 0C               	jne	L_342
     2821/    9DCD :                     ;	?debug	L 1034
-    2822/    9DCD : FF 06 A8 06         	inc	word ptr _cip
+    2822/    9DCD : FF 06 A8 07         	inc	word ptr _cip
     2823/    9DD1 :                     ;	?debug	L 1035
     2824/    9DD1 : E8 28 FA            	call	_iexp
     2825/    9DD4 : 89 46 FC            	mov	word ptr [bp-4],ax
@@ -2849,121 +2849,121 @@
     2846/    9DFE : 7D 08               	jge	L_344
     2847/    9E00 :                     L_345:
     2848/    9E00 :                     ;	?debug	L 1043
-    2849/    9E00 : C6 06 CA 07 02      	mov	byte ptr _err,2
+    2849/    9E00 : C6 06 CA 08 02      	mov	byte ptr _err,2
     2850/    9E05 :                     ;	?debug	L 1044
     2851/    9E05 : E9 E4 01            	jmp	L_327
     2852/    9E08 :                     L_344:
     2853/    9E08 :                     ;	?debug	L 1048
-    2854/    9E08 : 80 3E 30 08 0A      	cmp	byte ptr _lstki,10
+    2854/    9E08 : 80 3E 30 09 0A      	cmp	byte ptr _lstki,10
     2855/    9E0D : 72 08               	jb	L_347
     2856/    9E0F :                     ;	?debug	L 1049
-    2857/    9E0F : C6 06 CA 07 08      	mov	byte ptr _err,8
+    2857/    9E0F : C6 06 CA 08 08      	mov	byte ptr _err,8
     2858/    9E14 :                     ;	?debug	L 1050
     2859/    9E14 : E9 D5 01            	jmp	L_327
     2860/    9E17 :                     L_347:
     2861/    9E17 :                     ;	?debug	L 1052
-    2862/    9E17 : A1 A6 06            	mov	ax,word ptr _clp
-    2863/    9E1A : 8A 16 30 08         	mov	dl,byte ptr _lstki
+    2862/    9E17 : A1 A6 07            	mov	ax,word ptr _clp
+    2863/    9E1A : 8A 16 30 09         	mov	dl,byte ptr _lstki
     2864/    9E1E : B6 00               	mov	dh,0
     2865/    9E20 : 8B DA               	mov	bx,dx
     2866/    9E22 : D1 E3               	shl	bx,1
-    2867/    9E24 : 89 87 DD 07         	mov	word ptr _lstk[bx],ax
-    2868/    9E28 : FE 06 30 08         	inc	byte ptr _lstki
+    2867/    9E24 : 89 87 DD 08         	mov	word ptr _lstk[bx],ax
+    2868/    9E28 : FE 06 30 09         	inc	byte ptr _lstki
     2869/    9E2C :                     ;	?debug	L 1053
-    2870/    9E2C : A1 A8 06            	mov	ax,word ptr _cip
-    2871/    9E2F : 8A 16 30 08         	mov	dl,byte ptr _lstki
+    2870/    9E2C : A1 A8 07            	mov	ax,word ptr _cip
+    2871/    9E2F : 8A 16 30 09         	mov	dl,byte ptr _lstki
     2872/    9E33 : B6 00               	mov	dh,0
     2873/    9E35 : 8B DA               	mov	bx,dx
     2874/    9E37 : D1 E3               	shl	bx,1
-    2875/    9E39 : 89 87 DD 07         	mov	word ptr _lstk[bx],ax
-    2876/    9E3D : FE 06 30 08         	inc	byte ptr _lstki
+    2875/    9E39 : 89 87 DD 08         	mov	word ptr _lstk[bx],ax
+    2876/    9E3D : FE 06 30 09         	inc	byte ptr _lstki
     2877/    9E41 :                     ;	?debug	L 1055
     2878/    9E41 : 8B 46 FA            	mov	ax,word ptr [bp-6]
-    2879/    9E44 : 8A 16 30 08         	mov	dl,byte ptr _lstki
+    2879/    9E44 : 8A 16 30 09         	mov	dl,byte ptr _lstki
     2880/    9E48 : B6 00               	mov	dh,0
     2881/    9E4A : 8B DA               	mov	bx,dx
     2882/    9E4C : D1 E3               	shl	bx,1
-    2883/    9E4E : 89 87 DD 07         	mov	word ptr _lstk[bx],ax
-    2884/    9E52 : FE 06 30 08         	inc	byte ptr _lstki
+    2883/    9E4E : 89 87 DD 08         	mov	word ptr _lstk[bx],ax
+    2884/    9E52 : FE 06 30 09         	inc	byte ptr _lstki
     2885/    9E56 :                     ;	?debug	L 1056
     2886/    9E56 : 8B 46 FC            	mov	ax,word ptr [bp-4]
-    2887/    9E59 : 8A 16 30 08         	mov	dl,byte ptr _lstki
+    2887/    9E59 : 8A 16 30 09         	mov	dl,byte ptr _lstki
     2888/    9E5D : B6 00               	mov	dh,0
     2889/    9E5F : 8B DA               	mov	bx,dx
     2890/    9E61 : D1 E3               	shl	bx,1
-    2891/    9E63 : 89 87 DD 07         	mov	word ptr _lstk[bx],ax
-    2892/    9E67 : FE 06 30 08         	inc	byte ptr _lstki
+    2891/    9E63 : 89 87 DD 08         	mov	word ptr _lstk[bx],ax
+    2892/    9E67 : FE 06 30 09         	inc	byte ptr _lstki
     2893/    9E6B :                     ;	?debug	L 1057
     2894/    9E6B : 8B 46 F8            	mov	ax,word ptr [bp-8]
-    2895/    9E6E : 8A 16 30 08         	mov	dl,byte ptr _lstki
+    2895/    9E6E : 8A 16 30 09         	mov	dl,byte ptr _lstki
     2896/    9E72 : B6 00               	mov	dh,0
     2897/    9E74 : 8B DA               	mov	bx,dx
     2898/    9E76 : D1 E3               	shl	bx,1
-    2899/    9E78 : 89 87 DD 07         	mov	word ptr _lstk[bx],ax
-    2900/    9E7C : FE 06 30 08         	inc	byte ptr _lstki
+    2899/    9E78 : 89 87 DD 08         	mov	word ptr _lstk[bx],ax
+    2900/    9E7C : FE 06 30 09         	inc	byte ptr _lstki
     2901/    9E80 :                     ;	?debug	L 1058
     2902/    9E80 : E9 69 01            	jmp	L_327
     2903/    9E83 :                     L_348:
     2904/    9E83 :                     ;	?debug	L 1061
-    2905/    9E83 : FF 06 A8 06         	inc	word ptr _cip
+    2905/    9E83 : FF 06 A8 07         	inc	word ptr _cip
     2906/    9E87 :                     ;	?debug	L 1063
-    2907/    9E87 : 80 3E 30 08 05      	cmp	byte ptr _lstki,5
+    2907/    9E87 : 80 3E 30 09 05      	cmp	byte ptr _lstki,5
     2908/    9E8C : 73 08               	jae	L_349
     2909/    9E8E :                     ;	?debug	L 1064
-    2910/    9E8E : C6 06 CA 07 09      	mov	byte ptr _err,9
+    2910/    9E8E : C6 06 CA 08 09      	mov	byte ptr _err,9
     2911/    9E93 :                     ;	?debug	L 1065
     2912/    9E93 : E9 56 01            	jmp	L_327
     2913/    9E96 :                     L_349:
     2914/    9E96 :                     ;	?debug	L 1068
-    2915/    9E96 : A0 30 08            	mov	al,byte ptr _lstki
+    2915/    9E96 : A0 30 09            	mov	al,byte ptr _lstki
     2916/    9E99 : B4 00               	mov	ah,0
     2917/    9E9B : 8B D8               	mov	bx,ax
     2918/    9E9D : 4B                  	dec	bx
     2919/    9E9E : D1 E3               	shl	bx,1
-    2920/    9EA0 : 8B 87 DD 07         	mov	ax,word ptr _lstk[bx]
+    2920/    9EA0 : 8B 87 DD 08         	mov	ax,word ptr _lstk[bx]
     2921/    9EA4 : 89 46 F8            	mov	word ptr [bp-8],ax
     2922/    9EA7 :                     ;	?debug	L 1069
-    2923/    9EA7 : 8B 1E A8 06         	mov	bx,word ptr _cip
-    2924/    9EAB : FF 06 A8 06         	inc	word ptr _cip
+    2923/    9EA7 : 8B 1E A8 07         	mov	bx,word ptr _cip
+    2924/    9EAB : FF 06 A8 07         	inc	word ptr _cip
     2925/    9EAF : 80 3F 24            	cmp	byte ptr [bx],36
     2926/    9EB2 : 74 08               	je	L_350
     2927/    9EB4 :                     ;	?debug	L 1070
-    2928/    9EB4 : C6 06 CA 07 0A      	mov	byte ptr _err,10
+    2928/    9EB4 : C6 06 CA 08 0A      	mov	byte ptr _err,10
     2929/    9EB9 :                     ;	?debug	L 1071
     2930/    9EB9 : E9 30 01            	jmp	L_327
     2931/    9EBC :                     L_350:
     2932/    9EBC :                     ;	?debug	L 1073
-    2933/    9EBC : 8B 1E A8 06         	mov	bx,word ptr _cip
-    2934/    9EC0 : FF 06 A8 06         	inc	word ptr _cip
+    2933/    9EBC : 8B 1E A8 07         	mov	bx,word ptr _cip
+    2934/    9EC0 : FF 06 A8 07         	inc	word ptr _cip
     2935/    9EC4 : 8A 07               	mov	al,byte ptr [bx]
     2936/    9EC6 : B4 00               	mov	ah,0
     2937/    9EC8 : 3B 46 F8            	cmp	ax,word ptr [bp-8]
     2938/    9ECB : 74 08               	je	L_351
     2939/    9ECD :                     ;	?debug	L 1074
-    2940/    9ECD : C6 06 CA 07 0B      	mov	byte ptr _err,11
+    2940/    9ECD : C6 06 CA 08 0B      	mov	byte ptr _err,11
     2941/    9ED2 :                     ;	?debug	L 1075
     2942/    9ED2 : E9 17 01            	jmp	L_327
     2943/    9ED5 :                     L_351:
     2944/    9ED5 :                     ;	?debug	L 1078
-    2945/    9ED5 : A0 30 08            	mov	al,byte ptr _lstki
+    2945/    9ED5 : A0 30 09            	mov	al,byte ptr _lstki
     2946/    9ED8 : B4 00               	mov	ah,0
     2947/    9EDA : 8B D8               	mov	bx,ax
     2948/    9EDC : 83 C3 FE            	add	bx,-2
     2949/    9EDF : D1 E3               	shl	bx,1
-    2950/    9EE1 : 8B 87 DD 07         	mov	ax,word ptr _lstk[bx]
+    2950/    9EE1 : 8B 87 DD 08         	mov	ax,word ptr _lstk[bx]
     2951/    9EE5 : 89 46 FC            	mov	word ptr [bp-4],ax
     2952/    9EE8 :                     ;	?debug	L 1079
     2953/    9EE8 : 8B 46 FC            	mov	ax,word ptr [bp-4]
     2954/    9EEB : 8B 5E F8            	mov	bx,word ptr [bp-8]
     2955/    9EEE : D1 E3               	shl	bx,1
-    2956/    9EF0 : 01 87 FB 07         	add	word ptr _var[bx],ax
+    2956/    9EF0 : 01 87 FB 08         	add	word ptr _var[bx],ax
     2957/    9EF4 :                     ;	?debug	L 1080
-    2958/    9EF4 : A0 30 08            	mov	al,byte ptr _lstki
+    2958/    9EF4 : A0 30 09            	mov	al,byte ptr _lstki
     2959/    9EF7 : B4 00               	mov	ah,0
     2960/    9EF9 : 8B D8               	mov	bx,ax
     2961/    9EFB : 83 C3 FD            	add	bx,-3
     2962/    9EFE : D1 E3               	shl	bx,1
-    2963/    9F00 : 8B 87 DD 07         	mov	ax,word ptr _lstk[bx]
+    2963/    9F00 : 8B 87 DD 08         	mov	ax,word ptr _lstk[bx]
     2964/    9F04 : 89 46 FA            	mov	word ptr [bp-6],ax
     2965/    9F07 :                     ;	?debug	L 1083
     2966/    9F07 :                     ;	?debug	L 1084
@@ -2971,7 +2971,7 @@
     2968/    9F0B : 7D 0E               	jge	L_354
     2969/    9F0D : 8B 5E F8            	mov	bx,word ptr [bp-8]
     2970/    9F10 : D1 E3               	shl	bx,1
-    2971/    9F12 : 8B 87 FB 07         	mov	ax,word ptr _var[bx]
+    2971/    9F12 : 8B 87 FB 08         	mov	ax,word ptr _var[bx]
     2972/    9F16 : 3B 46 FA            	cmp	ax,word ptr [bp-6]
     2973/    9F19 : 7C 14               	jl	L_353
     2974/    9F1B :                     L_354:
@@ -2979,44 +2979,44 @@
     2976/    9F1F : 7E 16               	jle	L_352
     2977/    9F21 : 8B 5E F8            	mov	bx,word ptr [bp-8]
     2978/    9F24 : D1 E3               	shl	bx,1
-    2979/    9F26 : 8B 87 FB 07         	mov	ax,word ptr _var[bx]
+    2979/    9F26 : 8B 87 FB 08         	mov	ax,word ptr _var[bx]
     2980/    9F2A : 3B 46 FA            	cmp	ax,word ptr [bp-6]
     2981/    9F2D : 7E 08               	jle	L_352
     2982/    9F2F :                     L_353:
     2983/    9F2F :                     ;	?debug	L 1085
-    2984/    9F2F : 80 2E 30 08 05      	sub	byte ptr _lstki,5
+    2984/    9F2F : 80 2E 30 09 05      	sub	byte ptr _lstki,5
     2985/    9F34 :                     ;	?debug	L 1086
     2986/    9F34 : E9 B5 00            	jmp	L_327
     2987/    9F37 :                     L_352:
     2988/    9F37 :                     ;	?debug	L 1090
-    2989/    9F37 : A0 30 08            	mov	al,byte ptr _lstki
+    2989/    9F37 : A0 30 09            	mov	al,byte ptr _lstki
     2990/    9F3A : B4 00               	mov	ah,0
     2991/    9F3C : 8B D8               	mov	bx,ax
     2992/    9F3E : 83 C3 FC            	add	bx,-4
     2993/    9F41 : D1 E3               	shl	bx,1
-    2994/    9F43 : 8B 87 DD 07         	mov	ax,word ptr _lstk[bx]
-    2995/    9F47 : A3 A8 06            	mov	word ptr _cip,ax
+    2994/    9F43 : 8B 87 DD 08         	mov	ax,word ptr _lstk[bx]
+    2995/    9F47 : A3 A8 07            	mov	word ptr _cip,ax
     2996/    9F4A :                     ;	?debug	L 1091
-    2997/    9F4A : A0 30 08            	mov	al,byte ptr _lstki
+    2997/    9F4A : A0 30 09            	mov	al,byte ptr _lstki
     2998/    9F4D : B4 00               	mov	ah,0
     2999/    9F4F : 8B D8               	mov	bx,ax
     3000/    9F51 : 83 C3 FB            	add	bx,-5
     3001/    9F54 : D1 E3               	shl	bx,1
-    3002/    9F56 : 8B 87 DD 07         	mov	ax,word ptr _lstk[bx]
-    3003/    9F5A : A3 A6 06            	mov	word ptr _clp,ax
+    3002/    9F56 : 8B 87 DD 08         	mov	ax,word ptr _lstk[bx]
+    3003/    9F5A : A3 A6 07            	mov	word ptr _clp,ax
     3004/    9F5D :                     ;	?debug	L 1092
     3005/    9F5D : E9 8C 00            	jmp	L_327
     3006/    9F60 :                     L_355:
     3007/    9F60 :                     ;	?debug	L 1095
-    3008/    9F60 : FF 06 A8 06         	inc	word ptr _cip
+    3008/    9F60 : FF 06 A8 07         	inc	word ptr _cip
     3009/    9F64 :                     ;	?debug	L 1096
     3010/    9F64 : E8 95 F8            	call	_iexp
     3011/    9F67 : 89 46 FE            	mov	word ptr [bp-2],ax
     3012/    9F6A :                     ;	?debug	L 1097
-    3013/    9F6A : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    3013/    9F6A : 80 3E CA 08 00      	cmp	byte ptr _err,0
     3014/    9F6F : 74 07               	je	L_356
     3015/    9F71 :                     ;	?debug	L 1098
-    3016/    9F71 : C6 06 CA 07 0F      	mov	byte ptr _err,15
+    3016/    9F71 : C6 06 CA 08 0F      	mov	byte ptr _err,15
     3017/    9F76 :                     ;	?debug	L 1099
     3018/    9F76 : EB 74               	jmp	L_327
     3019/    9F78 :                     L_356:
@@ -3030,10 +3030,10 @@
     3027/    9F80 : EB 04               	jmp	L_359
     3028/    9F82 :                     L_361:
     3029/    9F82 :                     ;	?debug	L 1109
-    3030/    9F82 : FF 06 A8 06         	inc	word ptr _cip
+    3030/    9F82 : FF 06 A8 07         	inc	word ptr _cip
     3031/    9F86 :                     L_359:
     3032/    9F86 :                     ;	?debug	L 1108
-    3033/    9F86 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    3033/    9F86 : 8B 1E A8 07         	mov	bx,word ptr _cip
     3034/    9F8A : 80 3F 26            	cmp	byte ptr [bx],38
     3035/    9F8D : 75 F3               	jne	L_361
     3036/    9F8F :                     L_360:
@@ -3043,73 +3043,73 @@
     3040/    9F91 : EB 0C               	jmp	L_363
     3041/    9F93 :                     L_365:
     3042/    9F93 :                     ;	?debug	L 1114
-    3043/    9F93 : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3043/    9F93 : 8B 1E A6 07         	mov	bx,word ptr _clp
     3044/    9F97 : 8A 07               	mov	al,byte ptr [bx]
     3045/    9F99 : B4 00               	mov	ah,0
-    3046/    9F9B : 01 06 A6 06         	add	word ptr _clp,ax
+    3046/    9F9B : 01 06 A6 07         	add	word ptr _clp,ax
     3047/    9F9F :                     L_363:
     3048/    9F9F :                     ;	?debug	L 1113
-    3049/    9F9F : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3049/    9F9F : 8B 1E A6 07         	mov	bx,word ptr _clp
     3050/    9FA3 : 80 3F 00            	cmp	byte ptr [bx],0
     3051/    9FA6 : 75 EB               	jne	L_365
     3052/    9FA8 :                     L_364:
     3053/    9FA8 :                     ;	?debug	L 1115
-    3054/    9FA8 : A1 A6 06            	mov	ax,word ptr _clp
+    3054/    9FA8 : A1 A6 07            	mov	ax,word ptr _clp
     3055/    9FAB : EB 62               	jmp	L_321
     3056/    9FAD :                     L_366:
     3057/    9FAD :                     ;	?debug	L 1118
-    3058/    9FAD : FF 06 A8 06         	inc	word ptr _cip
+    3058/    9FAD : FF 06 A8 07         	inc	word ptr _cip
     3059/    9FB1 :                     ;	?debug	L 1119
     3060/    9FB1 : E8 58 FB            	call	_ivar
     3061/    9FB4 :                     ;	?debug	L 1120
     3062/    9FB4 : EB 36               	jmp	L_327
     3063/    9FB6 :                     L_367:
     3064/    9FB6 :                     ;	?debug	L 1122
-    3065/    9FB6 : FF 06 A8 06         	inc	word ptr _cip
+    3065/    9FB6 : FF 06 A8 07         	inc	word ptr _cip
     3066/    9FBA :                     ;	?debug	L 1123
     3067/    9FBA : E8 97 FB            	call	_iarray
     3068/    9FBD :                     ;	?debug	L 1124
     3069/    9FBD : EB 2D               	jmp	L_327
     3070/    9FBF :                     L_368:
     3071/    9FBF :                     ;	?debug	L 1126
-    3072/    9FBF : FF 06 A8 06         	inc	word ptr _cip
+    3072/    9FBF : FF 06 A8 07         	inc	word ptr _cip
     3073/    9FC3 :                     ;	?debug	L 1127
     3074/    9FC3 : E8 E3 FB            	call	_ilet
     3075/    9FC6 :                     ;	?debug	L 1128
     3076/    9FC6 : EB 24               	jmp	L_327
     3077/    9FC8 :                     L_369:
     3078/    9FC8 :                     ;	?debug	L 1130
-    3079/    9FC8 : FF 06 A8 06         	inc	word ptr _cip
+    3079/    9FC8 : FF 06 A8 07         	inc	word ptr _cip
     3080/    9FCC :                     ;	?debug	L 1131
     3081/    9FCC : E8 32 F9            	call	_iprint
     3082/    9FCF :                     ;	?debug	L 1132
     3083/    9FCF : EB 1B               	jmp	L_327
     3084/    9FD1 :                     L_370:
     3085/    9FD1 :                     ;	?debug	L 1134
-    3086/    9FD1 : FF 06 A8 06         	inc	word ptr _cip
+    3086/    9FD1 : FF 06 A8 07         	inc	word ptr _cip
     3087/    9FD5 :                     ;	?debug	L 1135
     3088/    9FD5 : E8 FF F9            	call	_iinput
     3089/    9FD8 :                     ;	?debug	L 1136
     3090/    9FD8 : EB 12               	jmp	L_327
     3091/    9FDA :                     L_371:
     3092/    9FDA :                     ;	?debug	L 1139
-    3093/    9FDA : FF 06 A8 06         	inc	word ptr _cip
+    3093/    9FDA : FF 06 A8 07         	inc	word ptr _cip
     3094/    9FDE :                     ;	?debug	L 1140
     3095/    9FDE : EB 0C               	jmp	L_327
     3096/    9FE0 :                     L_372:
     3097/    9FE0 :                     L_373:
     3098/    9FE0 :                     L_374:
     3099/    9FE0 :                     ;	?debug	L 1145
-    3100/    9FE0 : C6 06 CA 07 13      	mov	byte ptr _err,19
+    3100/    9FE0 : C6 06 CA 08 13      	mov	byte ptr _err,19
     3101/    9FE5 :                     ;	?debug	L 1146
     3102/    9FE5 : EB 05               	jmp	L_327
     3103/    9FE7 :                     L_375:
     3104/    9FE7 :                     ;	?debug	L 1149
-    3105/    9FE7 : C6 06 CA 07 14      	mov	byte ptr _err,20
+    3105/    9FE7 : C6 06 CA 08 14      	mov	byte ptr _err,20
     3106/    9FEC :                     ;	?debug	L 1150
     3107/    9FEC :                     L_327:
     3108/    9FEC :                     ;	?debug	L 1153
-    3109/    9FEC : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    3109/    9FEC : 80 3E CA 08 00      	cmp	byte ptr _err,0
     3110/    9FF1 : 74 04               	je	L_376
     3111/    9FF3 :                     ;	?debug	L 1154
     3112/    9FF3 : 33 C0               	xor	ax,ax
@@ -3117,17 +3117,17 @@
     3114/    9FF7 :                     L_376:
     3115/    9FF7 :                     L_322:
     3116/    9FF7 :                     ;	?debug	L 947
-    3117/    9FF7 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    3117/    9FF7 : 8B 1E A8 07         	mov	bx,word ptr _cip
     3118/    9FFB : 80 3F 26            	cmp	byte ptr [bx],38
     3119/    9FFE : 74 03               	je	L_379
     3120/    A000 : E9 DC FB            	jmp	L_324
     3121/    A003 :                     L_379:
     3122/    A003 :                     L_323:
     3123/    A003 :                     ;	?debug	L 1156
-    3124/    A003 : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3124/    A003 : 8B 1E A6 07         	mov	bx,word ptr _clp
     3125/    A007 : 8A 07               	mov	al,byte ptr [bx]
     3126/    A009 : B4 00               	mov	ah,0
-    3127/    A00B : 03 06 A6 06         	add	ax,word ptr _clp
+    3127/    A00B : 03 06 A6 07         	add	ax,word ptr _clp
     3128/    A00F :                     L_321:
     3129/    A00F :                     ;	?debug	L 1157
     3130/    A00F : 5E                  	pop	si
@@ -3139,30 +3139,30 @@
     3136/    A014 :                     _irun:
     3137/    A014 : 56                  	push	si
     3138/    A015 :                     ;	?debug	L 1163
-    3139/    A015 : C6 06 2F 08 00      	mov	byte ptr _gstki,0
+    3139/    A015 : C6 06 2F 09 00      	mov	byte ptr _gstki,0
     3140/    A01A :                     ;	?debug	L 1164
-    3141/    A01A : C6 06 30 08 00      	mov	byte ptr _lstki,0
+    3141/    A01A : C6 06 30 09 00      	mov	byte ptr _lstki,0
     3142/    A01F :                     ;	?debug	L 1165
-    3143/    A01F : C7 06 A6 06 31 08   	mov	word ptr _clp,_listbuf
+    3143/    A01F : C7 06 A6 07 31 09   	mov	word ptr _clp,_listbuf
     3144/    A025 : EB 1B               	jmp	L_381
     3145/    A027 :                     L_383:
     3146/    A027 :                     ;	?debug	L 1168
-    3147/    A027 : A1 A6 06            	mov	ax,word ptr _clp
+    3147/    A027 : A1 A6 07            	mov	ax,word ptr _clp
     3148/    A02A : 05 03 00            	add	ax,3
-    3149/    A02D : A3 A8 06            	mov	word ptr _cip,ax
+    3149/    A02D : A3 A8 07            	mov	word ptr _cip,ax
     3150/    A030 :                     ;	?debug	L 1169
     3151/    A030 : E8 A2 FB            	call	_iexe
     3152/    A033 : 8B F0               	mov	si,ax
     3153/    A035 :                     ;	?debug	L 1170
-    3154/    A035 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    3154/    A035 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     3155/    A03A : 74 02               	je	L_384
     3156/    A03C : EB 0D               	jmp	L_380
     3157/    A03E :                     L_384:
     3158/    A03E :                     ;	?debug	L 1172
-    3159/    A03E : 89 36 A6 06         	mov	word ptr _clp,si
+    3159/    A03E : 89 36 A6 07         	mov	word ptr _clp,si
     3160/    A042 :                     L_381:
     3161/    A042 :                     ;	?debug	L 1167
-    3162/    A042 : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3162/    A042 : 8B 1E A6 07         	mov	bx,word ptr _clp
     3163/    A046 : 80 3F 00            	cmp	byte ptr [bx],0
     3164/    A049 : 75 DC               	jne	L_383
     3165/    A04B :                     L_382:
@@ -3177,10 +3177,10 @@
     3174/    A04E : 8B EC               	mov	bp,sp
     3175/    A050 : 83 EC 02            	sub	sp,2
     3176/    A053 :                     ;	?debug	L 1180
-    3177/    A053 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    3177/    A053 : 8B 1E A8 07         	mov	bx,word ptr _cip
     3178/    A057 : 80 3F 23            	cmp	byte ptr [bx],35
     3179/    A05A : 75 0A               	jne	L_396
-    3180/    A05C : FF 36 A8 06         	push	word ptr _cip
+    3180/    A05C : FF 36 A8 07         	push	word ptr _cip
     3181/    A060 : E8 9E F2            	call	_getlineno
     3182/    A063 : 59                  	pop	cx
     3183/    A064 : EB 02               	jmp	L_395
@@ -3189,21 +3189,21 @@
     3186/    A068 :                     L_395:
     3187/    A068 : 89 46 FE            	mov	word ptr [bp-2],ax
     3188/    A06B :                     ;	?debug	L 1182
-    3189/    A06B : C7 06 A6 06 31 08   	mov	word ptr _clp,_listbuf
+    3189/    A06B : C7 06 A6 07 31 09   	mov	word ptr _clp,_listbuf
     3190/    A071 : EB 0C               	jmp	L_389
     3191/    A073 :                     L_388:
     3192/    A073 :                     L_387:
     3193/    A073 :                     ;	?debug	L 1184
-    3194/    A073 : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3194/    A073 : 8B 1E A6 07         	mov	bx,word ptr _clp
     3195/    A077 : 8A 07               	mov	al,byte ptr [bx]
     3196/    A079 : B4 00               	mov	ah,0
-    3197/    A07B : 01 06 A6 06         	add	word ptr _clp,ax
+    3197/    A07B : 01 06 A6 07         	add	word ptr _clp,ax
     3198/    A07F :                     L_389:
     3199/    A07F :                     ;	?debug	L 1183
-    3200/    A07F : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3200/    A07F : 8B 1E A6 07         	mov	bx,word ptr _clp
     3201/    A083 : 80 3F 00            	cmp	byte ptr [bx],0
     3202/    A086 : 74 0D               	je	L_390
-    3203/    A088 : FF 36 A6 06         	push	word ptr _clp
+    3203/    A088 : FF 36 A6 07         	push	word ptr _clp
     3204/    A08C : E8 72 F2            	call	_getlineno
     3205/    A08F : 59                  	pop	cx
     3206/    A090 : 3B 46 FE            	cmp	ax,word ptr [bp-2]
@@ -3215,7 +3215,7 @@
     3212/    A097 :                     ;	?debug	L 1187
     3213/    A097 : 33 C0               	xor	ax,ax
     3214/    A099 : 50                  	push	ax
-    3215/    A09A : FF 36 A6 06         	push	word ptr _clp
+    3215/    A09A : FF 36 A6 07         	push	word ptr _clp
     3216/    A09E : E8 60 F2            	call	_getlineno
     3217/    A0A1 : 59                  	pop	cx
     3218/    A0A2 : 50                  	push	ax
@@ -3228,13 +3228,13 @@
     3225/    A0AB : E8 B0 EB            	call	_c_putch
     3226/    A0AE : 59                  	pop	cx
     3227/    A0AF :                     ;	?debug	L 1189
-    3228/    A0AF : A1 A6 06            	mov	ax,word ptr _clp
+    3228/    A0AF : A1 A6 07            	mov	ax,word ptr _clp
     3229/    A0B2 : 05 03 00            	add	ax,3
     3230/    A0B5 : 50                  	push	ax
     3231/    A0B6 : E8 7C F3            	call	_putlist
     3232/    A0B9 : 59                  	pop	cx
     3233/    A0BA :                     ;	?debug	L 1190
-    3234/    A0BA : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    3234/    A0BA : 80 3E CA 08 00      	cmp	byte ptr _err,0
     3235/    A0BF : 74 02               	je	L_394
     3236/    A0C1 :                     ;	?debug	L 1191
     3237/    A0C1 : EB 18               	jmp	L_392
@@ -3242,13 +3242,13 @@
     3239/    A0C3 :                     ;	?debug	L 1192
     3240/    A0C3 : E8 0F EC            	call	_newline
     3241/    A0C6 :                     ;	?debug	L 1193
-    3242/    A0C6 : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3242/    A0C6 : 8B 1E A6 07         	mov	bx,word ptr _clp
     3243/    A0CA : 8A 07               	mov	al,byte ptr [bx]
     3244/    A0CC : B4 00               	mov	ah,0
-    3245/    A0CE : 01 06 A6 06         	add	word ptr _clp,ax
+    3245/    A0CE : 01 06 A6 07         	add	word ptr _clp,ax
     3246/    A0D2 :                     L_391:
     3247/    A0D2 :                     ;	?debug	L 1186
-    3248/    A0D2 : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3248/    A0D2 : 8B 1E A6 07         	mov	bx,word ptr _clp
     3249/    A0D6 : 80 3F 00            	cmp	byte ptr [bx],0
     3250/    A0D9 : 75 BC               	jne	L_393
     3251/    A0DB :                     L_392:
@@ -3272,7 +3272,7 @@
     3269/    A0EE : B4 00               	mov	ah,0
     3270/    A0F0 : 8B D8               	mov	bx,ax
     3271/    A0F2 : D1 E3               	shl	bx,1
-    3272/    A0F4 : C7 87 FB 07 00 00   	mov	word ptr _var[bx],0
+    3272/    A0F4 : C7 87 FB 08 00 00   	mov	word ptr _var[bx],0
     3273/    A0FA :                     L_399:
     3274/    A0FA : FE 46 FF            	inc	byte ptr [bp-1]
     3275/    A0FD :                     L_401:
@@ -3288,7 +3288,7 @@
     3285/    A10C : B4 00               	mov	ah,0
     3286/    A10E : 8B D8               	mov	bx,ax
     3287/    A110 : D1 E3               	shl	bx,1
-    3288/    A112 : C7 87 4A 07 00 00   	mov	word ptr _arr[bx],0
+    3288/    A112 : C7 87 4A 08 00 00   	mov	word ptr _arr[bx],0
     3289/    A118 :                     L_403:
     3290/    A118 : FE 46 FF            	inc	byte ptr [bp-1]
     3291/    A11B :                     L_405:
@@ -3296,13 +3296,13 @@
     3293/    A11F : 72 E8               	jb	L_404
     3294/    A121 :                     L_402:
     3295/    A121 :                     ;	?debug	L 1205
-    3296/    A121 : C6 06 2F 08 00      	mov	byte ptr _gstki,0
+    3296/    A121 : C6 06 2F 09 00      	mov	byte ptr _gstki,0
     3297/    A126 :                     ;	?debug	L 1206
-    3298/    A126 : C6 06 30 08 00      	mov	byte ptr _lstki,0
+    3298/    A126 : C6 06 30 09 00      	mov	byte ptr _lstki,0
     3299/    A12B :                     ;	?debug	L 1207
-    3300/    A12B : C6 06 31 08 00      	mov	byte ptr _listbuf,0
+    3300/    A12B : C6 06 31 09 00      	mov	byte ptr _listbuf,0
     3301/    A130 :                     ;	?debug	L 1208
-    3302/    A130 : C7 06 A6 06 31 08   	mov	word ptr _clp,_listbuf
+    3302/    A130 : C7 06 A6 07 31 09   	mov	word ptr _clp,_listbuf
     3303/    A136 :                     L_397:
     3304/    A136 :                     ;	?debug	L 1209
     3305/    A136 : 8B E5               	mov	sp,bp
@@ -3312,9 +3312,9 @@
     3309/    A13A :                     ;	?debug	L 1212
     3310/    A13A :                     _icom:
     3311/    A13A :                     ;	?debug	L 1213
-    3312/    A13A : C7 06 A8 06 06 06   	mov	word ptr _cip,_ibuf
+    3312/    A13A : C7 06 A8 07 06 07   	mov	word ptr _cip,_ibuf
     3313/    A140 :                     ;	?debug	L 1214
-    3314/    A140 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    3314/    A140 : 8B 1E A8 07         	mov	bx,word ptr _cip
     3315/    A144 : 8A 07               	mov	al,byte ptr [bx]
     3316/    A146 : B4 00               	mov	ah,0
     3317/    A148 : 3D 1F 00            	cmp	ax,31
@@ -3326,9 +3326,9 @@
     3323/    A157 : EB 45               	jmp	L_416
     3324/    A159 :                     L_408:
     3325/    A159 :                     ;	?debug	L 1216
-    3326/    A159 : FF 06 A8 06         	inc	word ptr _cip
+    3326/    A159 : FF 06 A8 07         	inc	word ptr _cip
     3327/    A15D :                     ;	?debug	L 1217
-    3328/    A15D : 8B 1E A8 06         	mov	bx,word ptr _cip
+    3328/    A15D : 8B 1E A8 07         	mov	bx,word ptr _cip
     3329/    A161 : 80 3F 26            	cmp	byte ptr [bx],38
     3330/    A164 : 75 05               	jne	L_409
     3331/    A166 :                     ;	?debug	L 1218
@@ -3336,18 +3336,18 @@
     3333/    A169 : EB 05               	jmp	L_410
     3334/    A16B :                     L_409:
     3335/    A16B :                     ;	?debug	L 1220
-    3336/    A16B : C6 06 CA 07 14      	mov	byte ptr _err,20
+    3336/    A16B : C6 06 CA 08 14      	mov	byte ptr _err,20
     3337/    A170 :                     L_410:
     3338/    A170 :                     ;	?debug	L 1221
     3339/    A170 : EB 2F               	jmp	L_407
     3340/    A172 :                     L_411:
     3341/    A172 :                     ;	?debug	L 1223
-    3342/    A172 : FF 06 A8 06         	inc	word ptr _cip
+    3342/    A172 : FF 06 A8 07         	inc	word ptr _cip
     3343/    A176 :                     ;	?debug	L 1224
-    3344/    A176 : 8B 1E A8 06         	mov	bx,word ptr _cip
+    3344/    A176 : 8B 1E A8 07         	mov	bx,word ptr _cip
     3345/    A17A : 80 3F 26            	cmp	byte ptr [bx],38
     3346/    A17D : 74 0A               	je	L_413
-    3347/    A17F : 8B 1E A8 06         	mov	bx,word ptr _cip
+    3347/    A17F : 8B 1E A8 07         	mov	bx,word ptr _cip
     3348/    A183 : 80 7F 03 26         	cmp	byte ptr [bx+3],38
     3349/    A187 : 75 05               	jne	L_412
     3350/    A189 :                     L_413:
@@ -3356,13 +3356,13 @@
     3353/    A18C : EB 05               	jmp	L_414
     3354/    A18E :                     L_412:
     3355/    A18E :                     ;	?debug	L 1227
-    3356/    A18E : C6 06 CA 07 14      	mov	byte ptr _err,20
+    3356/    A18E : C6 06 CA 08 14      	mov	byte ptr _err,20
     3357/    A193 :                     L_414:
     3358/    A193 :                     ;	?debug	L 1228
     3359/    A193 : EB 0C               	jmp	L_407
     3360/    A195 :                     L_415:
     3361/    A195 :                     ;	?debug	L 1230
-    3362/    A195 : FF 06 A8 06         	inc	word ptr _cip
+    3362/    A195 : FF 06 A8 07         	inc	word ptr _cip
     3363/    A199 :                     ;	?debug	L 1231
     3364/    A199 : E8 78 FE            	call	_irun
     3365/    A19C :                     ;	?debug	L 1232
@@ -3380,14 +3380,14 @@
     3377/    A1A2 :                     ;	?debug	L 1240
     3378/    A1A2 :                     _error:
     3379/    A1A2 :                     ;	?debug	L 1241
-    3380/    A1A2 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    3380/    A1A2 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     3381/    A1A7 : 74 5C               	je	L_418
     3382/    A1A9 :                     ;	?debug	L 1242
-    3383/    A1A9 : 81 3E A8 06 31 08   	cmp	word ptr _cip,_listbuf
+    3383/    A1A9 : 81 3E A8 07 31 09   	cmp	word ptr _cip,_listbuf
     3384/    A1AF : 72 41               	jb	L_419
-    3385/    A1B1 : 81 3E A8 06 00 80   	cmp	word ptr _cip,_listbuf+list_bufs
+    3385/    A1B1 : 81 3E A8 07 00 80   	cmp	word ptr _cip,_listbuf+list_bufs
     3386/    A1B7 : 73 39               	jae	L_419
-    3387/    A1B9 : 8B 1E A6 06         	mov	bx,word ptr _clp
+    3387/    A1B9 : 8B 1E A6 07         	mov	bx,word ptr _clp
     3388/    A1BD : 80 3F 00            	cmp	byte ptr [bx],0
     3389/    A1C0 : 74 30               	je	L_419
     3390/    A1C2 :                     ;	?debug	L 1244
@@ -3400,7 +3400,7 @@
     3397/    A1CD :                     ;	?debug	L 1246
     3398/    A1CD : 33 C0               	xor	ax,ax
     3399/    A1CF : 50                  	push	ax
-    3400/    A1D0 : FF 36 A6 06         	push	word ptr _clp
+    3400/    A1D0 : FF 36 A6 07         	push	word ptr _clp
     3401/    A1D4 : E8 2A F1            	call	_getlineno
     3402/    A1D7 : 59                  	pop	cx
     3403/    A1D8 : 50                  	push	ax
@@ -3413,7 +3413,7 @@
     3410/    A1E1 : E8 7A EA            	call	_c_putch
     3411/    A1E4 : 59                  	pop	cx
     3412/    A1E5 :                     ;	?debug	L 1248
-    3413/    A1E5 : A1 A6 06            	mov	ax,word ptr _clp
+    3413/    A1E5 : A1 A6 07            	mov	ax,word ptr _clp
     3414/    A1E8 : 05 03 00            	add	ax,3
     3415/    A1EB : 50                  	push	ax
     3416/    A1EC : E8 46 F2            	call	_putlist
@@ -3429,7 +3429,7 @@
     3426/    A1F9 : E8 AC EB            	call	_c_puts
     3427/    A1FC : 59                  	pop	cx
     3428/    A1FD :                     ;	?debug	L 1254
-    3429/    A1FD : B8 AA 06            	mov	ax,_lbuf
+    3429/    A1FD : B8 AA 07            	mov	ax,_lbuf
     3430/    A200 : 50                  	push	ax
     3431/    A201 : E8 A4 EB            	call	_c_puts
     3432/    A204 : 59                  	pop	cx
@@ -3438,7 +3438,7 @@
     3435/    A205 :                     ;	?debug	L 1258
     3436/    A205 : E8 CD EA            	call	_newline
     3437/    A208 :                     ;	?debug	L 1259
-    3438/    A208 : A0 CA 07            	mov	al,byte ptr _err
+    3438/    A208 : A0 CA 08            	mov	al,byte ptr _err
     3439/    A20B : B4 00               	mov	ah,0
     3440/    A20D : 8B D8               	mov	bx,ax
     3441/    A20F : D1 E3               	shl	bx,1
@@ -3448,7 +3448,7 @@
     3445/    A21A :                     ;	?debug	L 1260
     3446/    A21A : E8 B8 EA            	call	_newline
     3447/    A21D :                     ;	?debug	L 1261
-    3448/    A21D : C6 06 CA 07 00      	mov	byte ptr _err,0
+    3448/    A21D : C6 06 CA 08 00      	mov	byte ptr _err,0
     3449/    A222 :                     L_417:
     3450/    A222 :                     ;	?debug	L 1262
     3451/    A222 : C3                  	ret	
@@ -3492,7 +3492,7 @@
     3489/    A259 : E8 D0 ED            	call	_toktoi
     3490/    A25C : 88 46 FF            	mov	byte ptr [bp-1],al
     3491/    A25F :                     ;	?debug	L 1282
-    3492/    A25F : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    3492/    A25F : 80 3E CA 08 00      	cmp	byte ptr _err,0
     3493/    A264 : 74 05               	je	basic_5
     3494/    A266 :                     ;	?debug	L 1283
     3495/    A266 : E8 39 FF            	call	_error
@@ -3500,20 +3500,20 @@
     3497/    A269 : EB 2B               	jmp	basic_2
     3498/    A26B :                     basic_5:
     3499/    A26B :                     ;	?debug	L 1287
-    3500/    A26B : 80 3E 06 06 22      	cmp	byte ptr _ibuf,34
+    3500/    A26B : 80 3E 06 07 22      	cmp	byte ptr _ibuf,34
     3501/    A270 : 75 02               	jne	basic_6
     3502/    A272 : EB 24               	jmp	basic_1
     3503/    A274 :                     basic_6:
     3504/    A274 :                     ;	?debug	L 1291
-    3505/    A274 : 80 3E 06 06 23      	cmp	byte ptr _ibuf,35
+    3505/    A274 : 80 3E 06 07 23      	cmp	byte ptr _ibuf,35
     3506/    A279 : 75 15               	jne	basic_7
     3507/    A27B :                     ;	?debug	L 1292
     3508/    A27B : 8A 46 FF            	mov	al,byte ptr [bp-1]
-    3509/    A27E : A2 06 06            	mov	byte ptr _ibuf,al
+    3509/    A27E : A2 06 07            	mov	byte ptr _ibuf,al
     3510/    A281 :                     ;	?debug	L 1293
     3511/    A281 : E8 DF F0            	call	_inslist
     3512/    A284 :                     ;	?debug	L 1294
-    3513/    A284 : 80 3E CA 07 00      	cmp	byte ptr _err,0
+    3513/    A284 : 80 3E CA 08 00      	cmp	byte ptr _err,0
     3514/    A289 : 74 03               	je	basic_8
     3515/    A28B :                     ;	?debug	L 1295
     3516/    A28B : E8 14 FF            	call	_error
@@ -4250,32 +4250,32 @@
     4227/    A600 :                     CODE_END:
     4228/    A600 :                     
     4229/       0 :                     	SEGMENT	DATA
-    4230/     600 :                     	org	TB_WORK
-    4231/     600 :                     
-    4232/     600 :                     SEED:		ds	2
-    4233/     602 :                     SEEDX:		ds	2
-    4234/     604 :                     s_val:		ds	2
-    4235/     606 :                     _ibuf:		ds	160
-    4236/     6A6 :                     _clp:		ds	2
-    4237/     6A8 :                     _cip:		ds	2
-    4238/     6AA :                     _lbuf:		ds	160
-    4239/     74A :                     _arr:		ds	128
-    4240/     7CA :                     _err:		ds	1
-    4241/     7CB :                     _gstk:		ds	18
-    4242/     7DD :                     _lstk:		ds	30
-    4243/     7FB :                     _var:		ds	52
-    4244/     82F :                     _gstki:		ds	1
-    4245/     830 :                     _lstki:		ds	1
-    4246/     831 :                     endw:
-    4247/     831 :                     
-    4248/     831 : =231H                works		equ	endw - SEED
-    4249/     831 : =77CFH               list_bufs	equ	RAM_END+1 - works - TB_WORK
-    4250/     831 :                     
-    4251/     831 :                     _listbuf:	ds	list_bufs
+    4230/     700 :                     	org	TB_WORK
+    4231/     700 :                     
+    4232/     700 :                     SEED:		ds	2
+    4233/     702 :                     SEEDX:		ds	2
+    4234/     704 :                     s_val:		ds	2
+    4235/     706 :                     _ibuf:		ds	160
+    4236/     7A6 :                     _clp:		ds	2
+    4237/     7A8 :                     _cip:		ds	2
+    4238/     7AA :                     _lbuf:		ds	160
+    4239/     84A :                     _arr:		ds	128
+    4240/     8CA :                     _err:		ds	1
+    4241/     8CB :                     _gstk:		ds	18
+    4242/     8DD :                     _lstk:		ds	30
+    4243/     8FB :                     _var:		ds	52
+    4244/     92F :                     _gstki:		ds	1
+    4245/     930 :                     _lstki:		ds	1
+    4246/     931 :                     endw:
+    4247/     931 :                     
+    4248/     931 : =231H                works		equ	endw - SEED
+    4249/     931 : =76CFH               list_bufs	equ	RAM_END+1 - works - TB_WORK
+    4250/     931 :                     
+    4251/     931 :                     _listbuf:	ds	list_bufs
     4252/    8000 :                     
     4253/    8000 :                     endram:
     4254/    8000 :                     	end
- AS V1.42 Beta [Bld 227] - Source File ttbasic_cnv.asm - Page 2 - 2/28/2023 10:53:53
+ AS V1.42 Beta [Bld 227] - Source File ttbasic_cnv.asm - Page 2 - 3/4/2023 17:12:45
 
 
   Symbol Table (* = unused):
@@ -4302,13 +4302,13 @@
  C_ISSPACE17 :                 8D68 C |  C_ISSPACE18 :                 8D63 C |
  C_PUTS28 :                    8DB9 C |  C_PUTS30 :                    8DAD C |
  C_TOUPPER10 :                 8D34 C |  C_TOUPPER11 :                 8D31 C |
-*DATE :                 "2/28/2023" - |  DEBUG :                          0 - |
+*DATE :                  "3/4/2023" - |  DEBUG :                          0 - |
  DT_SEG :                         0 - | *ENDRAM :                      8000 D |
- ENDW :                         831 D | *FALSE :                          0 - |
+ ENDW :                         931 D | *FALSE :                          0 - |
 *FULLPMMU :                       1 - | *HAS64 :                          0 - |
 *HASFPU :                         0 - | *HASPMMU :                        0 - |
 *INSUPMODE :                      0 - |  KW_BODY :                    0A338 C |
-*LISTON :                         1 - |  LIST_BUFS :                   77CF - |
+*LISTON :                         1 - |  LIST_BUFS :                   76CF - |
  L_100 :                       9123 C | *L_101 :                       912D C |
  L_102 :                       9112 C |  L_103 :                       913B C |
  L_104 :                       91D8 C | *L_105 :                       9182 C |
@@ -4504,29 +4504,29 @@
 *RELAXED :                        0 - |  RET_MON :                     8C27 C |
  RND3 :                        8C97 C |  RND4 :                        8CB2 C |
  RND_BASE :                    8000 - |  RND_END :                     8C00 - |
- SEED :                         600 D |  SEEDX :                        602 D |
+ SEED :                         700 D |  SEEDX :                        702 D |
  SSTYLE4 :                     8D19 C |  SSTYLE7 :                     8CF8 C |
  SSTYLE8 :                     8D0D C |  START_TB :                    8C06 C |
- S_VAL :                        604 D |  TB_OFF :                      8C00 - |
- TB_STACK :                     600 - |  TB_WORK :                      600 - |
-*TIME :                  "10:53:53" - | *TRUE :                           1 - |
+ S_VAL :                        704 D |  TB_OFF :                      8C00 - |
+ TB_STACK :                     700 - |  TB_WORK :                      700 - |
+*TIME :                  "17:12:45" - | *TRUE :                           1 - |
  UPDATE_SEED :                 8C2B C | *VERSION :                     142F - |
  W1 :                          8C40 C |  WORKS :                        231 - |
  WSTART :                     0A29F C |  W_START :                     8C47 C |
- _ARR :                         74A D |  _BASIC :                     0A223 C |
- _CIP :                         6A8 D |  _CLP :                         6A6 D |
+ _ARR :                         84A D |  _BASIC :                     0A223 C |
+ _CIP :                         7A8 D |  _CLP :                         7A6 D |
  _C_GETCH :                    8C6C C |  _C_GETS :                     8DC3 C |
  _C_ISALPHA :                  8D84 C |  _C_ISDIGIT :                  8D6C C |
  _C_ISPRINT :                  8D36 C |  _C_ISSPACE :                  8D4E C |
  _C_KBHIT :                    8C76 C |  _C_PUTCH :                    8C5E C |
  _C_PUTS :                     8DA8 C |  _C_TOUPPER :                  8D1B C |
- _ERR :                         7CA D |  _ERRMSG :                    0A30A C |
+ _ERR :                         8CA D |  _ERRMSG :                    0A30A C |
  _ERROR :                     0A1A2 C |  _GETLINENO :                  9301 C |
  _GETLP :                      9325 C |  _GETNUM :                     8F0C C |
  _GETPARAM :                   957C C |  _GETRND :                     8CE4 C |
- _GETSIZE :                    934A C |  _GSTK :                        7CB D |
- _GSTKI :                       82F D |  _IARRAY :                     9B54 C |
- _IBUF :                        606 D |  _ICOM :                      0A13A C |
+ _GETSIZE :                    934A C |  _GSTK :                        8CB D |
+ _GSTKI :                       92F D |  _IARRAY :                     9B54 C |
+ _IBUF :                        706 D |  _ICOM :                      0A13A C |
  _IEXE :                       9BD5 C |  _IEXP :                       97FC C |
  _IINPUT :                     99D7 C |  _ILET :                       9BA9 C |
  _ILIST :                     0A04D C |  _IMUL :                       972B C |
@@ -4535,18 +4535,18 @@
  _IRUN :                      0A014 C |  _IVALUE :                     95C6 C |
  _IVAR :                       9B0C C |  _I_NSA :                     0A2A2 C |
  _I_NSB :                     0A2B5 C |  _KWTBL :                     0A2C4 C |
- _LBUF :                        6AA D |  _LISTBUF :                     831 D |
- _LSTK :                        7DD D |  _LSTKI :                       830 D |
+ _LBUF :                        7AA D |  _LISTBUF :                     931 D |
+ _LSTK :                        8DD D |  _LSTKI :                       930 D |
  _MAIN :                       8CC7 C |  _NEWLINE :                    8CD5 C |
  _PUTLIST :                    9435 C |  _PUTNUM :                     8E78 C |
  _RAND :                       8C8B C |  _SRAND :                      8C7D C |
  _SSTYLE :                     8CF3 C |  _TOKTOI :                     902C C |
- _VAR :                         7FB D |
+ _VAR :                         8FB D |
 
     520 symbols
      82 unused symbols
 
- AS V1.42 Beta [Bld 227] - Source File ttbasic_cnv.asm - Page 3 - 2/28/2023 10:53:53
+ AS V1.42 Beta [Bld 227] - Source File ttbasic_cnv.asm - Page 3 - 3/4/2023 17:12:45
 
 
   Code Pages:
@@ -4556,7 +4556,7 @@ STANDARD (0 changed characters)
 
 1 code page
 
-0.12 seconds assembly time
+0.07 seconds assembly time
 
    4255 lines source file
       4 passes
