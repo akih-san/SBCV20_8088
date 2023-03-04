@@ -18,8 +18,8 @@ ROM_B:	EQU	08000H
 RAMSEG:	EQU	0000H		; DSEG & SSEG
 
 WORK_B:	EQU	400H	; unimon work area 400h - 500h
-STACK:	EQU	580H	; unimon stack area 500h - 580h
-
+STACK:	EQU	600H	; unimon stack area 600h - 680h
+U_STACK	EQU	STACK+100H	; 700H
 BUFLEN:	EQU	24
 VECSIZ:	EQU	256		; Number of vectors to be initialized
 
@@ -46,8 +46,8 @@ DEL:	EQU	7FH
 
 XON  	equ	11h		; code DC1
 XOFF	equ	13h		; code DC3
-BUFSIZ	equ	128
-FULSIZ	equ	BUFSIZ-32	;Buffer almost full
+BUFSIZ	equ	240
+FULSIZ	equ	BUFSIZ-192	;Buffer almost full
 RBLOW	equ	10
 
 
@@ -114,7 +114,7 @@ IR0:
 	; init break point segment
 	mov	[brkcs], ax
 
-	mov	ax, STACK
+	mov	ax, U_STACK
 	mov	[REGIP], ax
 	; init break point ip
 	mov	[brkip], ax
@@ -122,7 +122,7 @@ IR0:
 	MOV	AX,RAMSEG
 	MOV	[REGDS],AX
 	MOV	[REGSS],AX
-	MOV	AX,STACK
+	MOV	AX,U_STACK
 	MOV	[REGSP],AX
 
 	; init user FL : set interrupt (sti)
@@ -171,6 +171,7 @@ INI2:
 	mov	ax, intsr
 	mov	[di], ax
 
+	mov	byte ptr [tsh], FULSIZ
 	sti	; enable interrupt
 
 	;; Opening message
@@ -1148,7 +1149,7 @@ nfnc3:
 	MOV	DS,AX
 	MOV	SS,AX
 	MOV	SP,STACK
-
+nfnc31:
 	mov	al, XON
 	mov	[rx_xflg], al
 	call	CONOUT
@@ -1530,7 +1531,11 @@ gcst1:	mov	al, [RBFCNT]
 	mov	al, [bx+RECBUF]	;Read char from buffer
 ;
 	inc	bl		;Next read point
-	and	bl,BUFSIZ-1	;Wrap
+	cmp	bl, BUFSIZ
+	jnz	sv_rdptr
+	xor	bl, bl		;Wrap
+;	and	bl,BUFSIZ-1	;Wrap
+sv_rdptr:
 	mov	[RBFRDP] ,bl	;Update
 	sti
 
@@ -1552,7 +1557,9 @@ gcst5:	; get a char to al
 
 	; XON state is here
 chk_xon:
-	cmp	byte ptr [RBFCNT], FULSIZ	; need XOFF action?
+
+	mov	al, [tsh]			; get threshold value
+	cmp	[RBFCNT], al			; need XOFF action?
 	jb	gcst5				; return if char buffering state
 	mov	ah, XOFF-XON			; set XOFF base digit
 need_xon:
@@ -1632,8 +1639,13 @@ rec1:
 	mov	bl, [RBFWTP]
 	mov	bh, 0
 	mov	[bx+RECBUF], al	;Write char into buffer
+
 	inc	bl		;Next write point
-	and	bl,BUFSIZ-1	;Wrap
+	cmp	bl, BUFSIZ
+	jnz	sv_wtptr
+	xor	bl, bl		;Wrap
+;	and	bl,BUFSIZ-1	;Wrap
+sv_wtptr:
 	mov	[RBFWTP], bl	;Update
 
 isext:
@@ -1671,6 +1683,7 @@ isext1:
 ;
 ;	Receive buffer
 MAXCNT	ds	1
+tsh	ds	1
 LOSTC	ds	2
 RBFRDP	ds	1	;Read address
 RBFWTP	ds	1	;Write address
