@@ -35,3 +35,20 @@ unimonに戻ります。
 
 GAME-86をwarm bootします。
 GAMEプログラムは残ったままです。
+
+・VTLの起動
+
+] G B500
+VTL-C SBCV20/8088 edition.
+
+OK
+
+Deleteキー（画面には何も表示されません）<リターン>
+unimonに戻ります。
+
+] G B503
+
+OK
+
+VTLをwarm bootします。
+VTLプログラムは残ったままです。
