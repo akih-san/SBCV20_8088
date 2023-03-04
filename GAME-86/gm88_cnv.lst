@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 227] - Source File gm88_cnv.asm - Page 1 - 2/28/2023 12:44:15
+ AS V1.42 Beta [Bld 227] - Source File gm88_cnv.asm - Page 1 - 3/4/2023 17:19:0
 
 
        1/       0 :                     	page 0
@@ -14,15 +14,15 @@
       11/       0 :                     
       12/       0 : =0H                  DT_SEG		equ	0h
       13/       0 : =7FFFH               RAM_END		equ	7fffh
-      14/       0 : =600H                TB_STACK	equ	600h
+      14/       0 : =700H                TB_STACK	equ	700h
       15/       0 : =8000H               RND_BASE	equ	8000h
       16/       0 : =8A00H               RND_END		equ	8a00h
       17/       0 :                     
       18/       0 : =>TRUE               	if DEBUG = 0
-      19/       0 : =0A600H              TB_OFF		equ	0a600h
-      20/       0 : =600H                TB_WORK		equ	600h
+      19/       0 : =0A600H              TB_OFF		equ	0A600h
+      20/       0 : =700H                TB_WORK		equ	TB_STACK
       21/       0 : =>FALSE              	else
-      22/       0 :                     TB_OFF		equ	600h
+      22/       0 :                     TB_OFF		equ	TB_STACK
       23/       0 :                     TB_WORK		equ	2000h
       24/       0 : [18]                 	endif
       25/       0 :                     
@@ -46,11 +46,11 @@
       43/    A606 : B8 00 00            	mov	ax, DT_SEG
       44/    A609 : 8E D8               	MOV	DS,AX
       45/    A60B : 8E D0               	MOV	SS,AX
-      46/    A60D : BC 00 06            	MOV	SP,TB_STACK
+      46/    A60D : BC 00 07            	MOV	SP,TB_STACK
       47/    A610 :                     
       48/    A610 : 33 C0               	xor	ax, ax
-      49/    A612 : BF 00 06            	mov	di, TB_WORK
-      50/    A615 : B9 00 3D            	mov	cx, ((RAM_END+1) - TB_WORK)/2
+      49/    A612 : BF 00 07            	mov	di, TB_WORK
+      50/    A615 : B9 80 3C            	mov	cx, ((RAM_END+1) - TB_WORK)/2
       51/    A618 :                     mem_clear:
       52/    A618 : 89 05               	mov	[di], ax
       53/    A61A : 47                  	inc	di
@@ -58,7 +58,7 @@
       55/    A61C : E2 FA               	loop	mem_clear
       56/    A61E :                     
       57/    A61E : B8 00 80            	mov	ax, RND_BASE
-      58/    A621 : A3 04 06            	mov	[s_val], ax	; set initial BASE value for SEED
+      58/    A621 : A3 04 07            	mov	[s_val], ax	; set initial BASE value for SEED
       59/    A624 : 33 C0               	xor	ax, ax		; al : st_flg = 0
       60/    A626 : E9 B1 00            	jmp	_main
       61/    A629 :                     
@@ -68,15 +68,15 @@
       65/    A629 :                     update_seed:
       66/    A629 : 50                  	push	ax
       67/    A62A : 53                  	push	bx
-      68/    A62B : 8B 1E 04 06         	mov	bx, [s_val]
+      68/    A62B : 8B 1E 04 07         	mov	bx, [s_val]
       69/    A62F : 8B 07               	mov	ax, [bx]
-      70/    A631 : A3 02 06            	mov	[SEEDX], ax	; update SEED
+      70/    A631 : A3 02 07            	mov	[SEEDX], ax	; update SEED
       71/    A634 : 43                  	inc	bx
       72/    A635 : 81 FB 00 8A         	cmp	bx, RND_END
       73/    A639 : 75 03               	jne	w1
       74/    A63B : BB 00 80            	mov	bx, RND_BASE
       75/    A63E :                     w1:
-      76/    A63E : 89 1E 04 06         	mov	[s_val], bx	; update base value
+      76/    A63E : 89 1E 04 07         	mov	[s_val], bx	; update base value
       77/    A642 : 5B                  	pop	bx
       78/    A643 : 58                  	pop	ax
       79/    A644 : C3                  	ret
@@ -87,7 +87,7 @@
       84/    A645 : B8 00 00            	mov	ax, DT_SEG
       85/    A648 : 8E D8               	MOV	DS,AX
       86/    A64A : 8E D0               	MOV	SS,AX
-      87/    A64C : BC 00 06            	MOV	SP,TB_STACK
+      87/    A64C : BC 00 07            	MOV	SP,TB_STACK
       88/    A64F : E8 D7 FF            	call	update_seed
       89/    A652 : B0 01               	mov	al,1	; al : st_flg = 0
       90/    A654 : E9 83 00            	jmp	_main
@@ -140,8 +140,8 @@
      137/    A674 : 8B EC               	mov	bp,sp
      138/    A676 :                     
      139/    A676 : 8B 46 04            	mov	ax,[bp+4]	; Load Arg1 into AX
-     140/    A679 : A3 00 06            	mov	[SEED], ax
-     141/    A67C : A3 02 06            	mov	[SEEDX], ax
+     140/    A679 : A3 00 07            	mov	[SEED], ax
+     141/    A67C : A3 02 07            	mov	[SEEDX], ax
      142/    A67F :                     	
      143/    A67F : 5D                  	pop	bp
      144/    A680 : C3                  	ret
@@ -153,7 +153,7 @@
      150/    A681 : 51                  	push	cx
      151/    A682 : 52                  	push	dx
      152/    A683 :                     
-     153/    A683 : A1 02 06            	mov	ax, [SEEDX]
+     153/    A683 : A1 02 07            	mov	ax, [SEEDX]
      154/    A686 : 0B C0               	or	ax, ax
      155/    A688 : 75 03               	jnz	RND3
      156/    A68A : B8 01 00            	mov	ax, 1
@@ -168,18 +168,18 @@
      165/    A69B : 33 C2               	xor	ax, dx
      166/    A69D : 50                  	push	ax
      167/    A69E :                     
-     168/    A69E : A1 00 06            	mov	ax, [SEED]
+     168/    A69E : A1 00 07            	mov	ax, [SEED]
      169/    A6A1 : 0B C0               	or	ax, ax
      170/    A6A3 : 75 03               	jnz	RND4
      171/    A6A5 : B8 01 00            	mov	ax, 1
      172/    A6A8 :                     RND4:
-     173/    A6A8 : A3 02 06            	mov	[SEEDX], ax
+     173/    A6A8 : A3 02 07            	mov	[SEEDX], ax
      174/    A6AB : 8B D0               	mov	dx, ax
      175/    A6AD : D1 EA               	shr	dx, 1
      176/    A6AF : 33 C2               	xor	ax, dx
      177/    A6B1 : 5A                  	pop	dx
      178/    A6B2 : 33 C2               	xor	ax, dx
-     179/    A6B4 : A3 00 06            	mov	[SEED], ax	; 0 - FFFFH : -32768 ~ 32767
+     179/    A6B4 : A3 00 07            	mov	[SEED], ax	; 0 - FFFFH : -32768 ~ 32767
      180/    A6B7 : 25 FF 7F            	and	ax, 7fffh	; 0 - 7FFFH : 0 ~ 32767
      181/    A6BA :                     
      182/    A6BA : 5A                  	pop dx
@@ -228,11 +228,11 @@
      225/    A6E7 : E8 89 FF            	call	_srand
      226/    A6EA : 59                  	pop	cx
      227/    A6EB :                     
-     228/    A6EB : B8 F8 08            	mov	ax,_text_buf
+     228/    A6EB : B8 F8 09            	mov	ax,_text_buf
      229/    A6EE :                     ;	mov	word ptr _var+58,ax
-     230/    A6EE : A3 72 08            	mov	word ptr _var+122,ax		; 122 : '=' *2
+     230/    A6EE : A3 72 09            	mov	word ptr _var+122,ax		; 122 : '=' *2
      231/    A6F1 :                     ;	mov	word ptr _var+20,32767
-     232/    A6F1 : C7 06 4C 08 FF 7F   	mov	word ptr _var+84,32767		; 84 : '*' *2
+     232/    A6F1 : C7 06 4C 09 FF 7F   	mov	word ptr _var+84,32767		; 84 : '*' *2
      233/    A6F7 : E8 8A 0D            	call	_newText1
      234/    A6FA : B8 92 B4            	mov	ax, op_msg_
      235/    A6FD : 50                  	push	ax
@@ -244,15 +244,15 @@
      241/    A706 : E8 B4 FF            	call	_c_puts
      242/    A709 : 59                  	pop	cx
      243/    A70A :                     L_9:
-     244/    A70A : C7 06 08 06 FF FF   	mov	word ptr [_sp],-1
-     245/    A710 : C7 06 0A 06 00 00   	mov	word ptr _lno,0
-     246/    A716 : B8 10 06            	mov	ax,_lin
+     244/    A70A : C7 06 08 07 FF FF   	mov	word ptr [_sp],-1
+     245/    A710 : C7 06 0A 07 00 00   	mov	word ptr _lno,0
+     246/    A716 : B8 10 07            	mov	ax,_lin
      247/    A719 : 50                  	push	ax
      248/    A71A : E8 BD 0B            	call	_c_gets
      249/    A71D : 59                  	pop	cx
      250/    A71E : 8B F8               	mov	di,ax
-     251/    A720 : C6 85 11 06 80      	mov	byte ptr _lin[di+1],-128
-     252/    A725 : C7 06 06 06 10 06   	mov	word ptr _pc,_lin
+     251/    A720 : C6 85 11 07 80      	mov	byte ptr _lin[di+1],-128
+     252/    A725 : C7 06 06 07 10 07   	mov	word ptr _pc,_lin
      253/    A72B : E8 85 02            	call	_skipBlank
      254/    A72E : 8D 46 FE            	lea	ax,word ptr [bp-2]
      255/    A731 : 50                  	push	ax
@@ -301,7 +301,7 @@
      298/    A76F :                     
      299/    A76F : 33 C9               	xor	cx, cx		; f = 0 (no much)
      300/    A771 :                     ;	mov	si, [_var+58]	; si: TOPP '='
-     301/    A771 : 8B 36 72 08         	mov	si, [_var+122]	; 122 : '='*2
+     301/    A771 : 8B 36 72 09         	mov	si, [_var+122]	; 122 : '='*2
      302/    A775 :                     
      303/    A775 :                     sl_loop:
      304/    A775 : 8A 04               	mov	al, [si]
@@ -351,7 +351,7 @@
      348/    A7AE : 75 0B               	jne	L_25
      349/    A7B0 :                     
      350/    A7B0 :                     ;	push	word ptr _var+58
-     351/    A7B0 : FF 36 72 08         	push	word ptr _var+122	; 122 : '='*2
+     351/    A7B0 : FF 36 72 09         	push	word ptr _var+122	; 122 : '='*2
      352/    A7B4 : E8 E1 01            	call	_dispList
      353/    A7B7 : 59                  	pop	cx
      354/    A7B8 : E9 8A FE            	jmp	_warm_boot
@@ -364,7 +364,7 @@
      361/    A7C3 : 59                  	pop	cx
      362/    A7C4 : 59                  	pop	cx
      363/    A7C5 : 8B F0               	mov	si,ax
-     364/    A7C7 : 8B 1E 06 06         	mov	bx,word ptr _pc
+     364/    A7C7 : 8B 1E 06 07         	mov	bx,word ptr _pc
      365/    A7CB : 80 3F 2F            	cmp	byte ptr [bx],47
      366/    A7CE : 75 08               	jne	L_26
      367/    A7D0 :                     
@@ -375,7 +375,7 @@
      372/    A7D8 :                     
      373/    A7D8 :                     L_26:
      374/    A7D8 :                     ;	mov	bx,word ptr _var+12
-     375/    A7D8 : 8B 1E 44 08         	mov	bx,word ptr _var+76	; 76 : '&' *2
+     375/    A7D8 : 8B 1E 44 09         	mov	bx,word ptr _var+76	; 76 : '&' *2
      376/    A7DC : 80 3F FF            	cmp	byte ptr [bx],255
      377/    A7DF : 74 07               	je	L_28
      378/    A7E1 :                     
@@ -391,7 +391,7 @@
      388/    A7EF : E8 6A 00            	call	_deleteLine
      389/    A7F2 : 59                  	pop	cx
      390/    A7F3 :                     L_29:
-     391/    A7F3 : 8B 1E 06 06         	mov	bx, [_pc]
+     391/    A7F3 : 8B 1E 06 07         	mov	bx, [_pc]
      392/    A7F7 : 80 3F 00            	cmp	byte ptr [bx],0
      393/    A7FA : 75 04               	jne	L_30
      394/    A7FC : 33 C0               	xor	ax,ax
@@ -423,7 +423,7 @@
      420/    A820 : 8B F8               	mov	di,ax
      421/    A822 : 83 C7 03            	add	di,3
      422/    A825 :                     ;	mov	ax,word ptr _var+12
-     423/    A825 : A1 44 08            	mov	ax,word ptr _var+76	; 76 : '&' *2
+     423/    A825 : A1 44 09            	mov	ax,word ptr _var+76	; 76 : '&' *2
      424/    A828 : 2B C6               	sub	ax,si
      425/    A82A : 40                  	inc	ax	;ax = (((u_char*)BTMP)-p)+1
      426/    A82B : 50                  	push	ax
@@ -451,7 +451,7 @@
      448/    A853 : 59                  	pop	cx
      449/    A854 :                     
      450/    A854 :                     ;	add	word ptr _var+12,di
-     451/    A854 : 01 3E 44 08         	add	word ptr _var+76,di	; 76 : '&' *2
+     451/    A854 : 01 3E 44 09         	add	word ptr _var+76,di	; 76 : '&' *2
      452/    A858 : 5F                  	pop	di
      453/    A859 : 5E                  	pop	si
      454/    A85A : 5D                  	pop	bp
@@ -474,7 +474,7 @@
      471/    A86F : 83 C6 03            	add	si,3
      472/    A872 :                     
      473/    A872 :                     ;	mov	ax,word ptr _var+12
-     474/    A872 : A1 44 08            	mov	ax,word ptr _var+76	; 76 : '&' * 2
+     474/    A872 : A1 44 09            	mov	ax,word ptr _var+76	; 76 : '&' * 2
      475/    A875 : 2B C7               	sub	ax,di
      476/    A877 : 2B C6               	sub	ax,si
      477/    A879 : 40                  	inc	ax
@@ -488,7 +488,7 @@
      485/    A881 : E8 F8 0A            	call	_memmove
      486/    A884 : 83 C4 06            	add	sp,6
      487/    A887 :                     ;	sub	word ptr _var+12,si
-     488/    A887 : 29 36 44 08         	sub	word ptr _var+76,si	; 76 : '&' *2
+     488/    A887 : 29 36 44 09         	sub	word ptr _var+76,si	; 76 : '&' *2
      489/    A88B : 5F                  	pop	di
      490/    A88C : 5E                  	pop	si
      491/    A88D : 5D                  	pop	bp
@@ -726,7 +726,7 @@
      723/    A9B2 : C3                  	ret	
      724/    A9B3 :                     
      725/    A9B3 :                     _skipBlank:
-     726/    A9B3 : 8B 1E 06 06         	mov	bx, [_pc]
+     726/    A9B3 : 8B 1E 06 07         	mov	bx, [_pc]
      727/    A9B7 :                     L_56:
      728/    A9B7 : 8A 07               	mov	al, [bx]
      729/    A9B9 : 3C 20               	cmp	al, ' '
@@ -734,12 +734,12 @@
      731/    A9BD : 43                  	inc	bx
      732/    A9BE : EB F7               	jmp	L_56
      733/    A9C0 :                     
-     734/    A9C0 : 89 1E 06 06         L_57:	mov	[_pc], bx	; update pc
+     734/    A9C0 : 89 1E 06 07         L_57:	mov	[_pc], bx	; update pc
      735/    A9C4 : C3                  	ret	
      736/    A9C5 :                     
      737/    A9C5 :                     
      738/    A9C5 :                     _skipAlpha:
-     739/    A9C5 : 8B 1E 06 06         	mov	bx,word ptr _pc
+     739/    A9C5 : 8B 1E 06 07         	mov	bx,word ptr _pc
      740/    A9C9 :                     
      741/    A9C9 :                     L_61:
      742/    A9C9 : 8A 07               	mov	al,byte ptr [bx]
@@ -758,7 +758,7 @@
      755/    A9DC : EB EB               	jmp	L_61
      756/    A9DE :                     
      757/    A9DE :                     no_skip:
-     758/    A9DE : 89 1E 06 06         	mov	[_pc], bx	; update pc
+     758/    A9DE : 89 1E 06 07         	mov	[_pc], bx	; update pc
      759/    A9E2 : C3                  	ret	
      760/    A9E3 :                     
      761/    A9E3 :                     _exqt:
@@ -767,7 +767,7 @@
      764/    A9E9 : EB F8               	jmp	_exqt
      765/    A9EB :                     
      766/    A9EB :                     _topOfLine:
-     767/    A9EB : 8B 1E 06 06         	mov	bx, [_pc]
+     767/    A9EB : 8B 1E 06 07         	mov	bx, [_pc]
      768/    A9EF :                     
      769/    A9EF :                     L_69:
      770/    A9EF : 8A 07               	mov	al, [bx]
@@ -782,7 +782,7 @@
      779/    A9FC :                     L_70:
      780/    A9FC : 8A E0               	mov	ah, al
      781/    A9FE : 8A 07               	mov	al, [bx]
-     782/    AA00 : A3 0A 06            	mov	word ptr _lno, ax
+     782/    AA00 : A3 0A 07            	mov	word ptr _lno, ax
      783/    AA03 : 43                  	inc	bx
      784/    AA04 :                     
      785/    AA04 : 80 3F 20            	cmp	byte ptr [bx], ' '
@@ -795,7 +795,7 @@
      792/    AA10 : EB DD               	jmp	L_69
      793/    AA12 :                     
      794/    AA12 :                     L_71:
-     795/    AA12 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+     795/    AA12 : 89 1E 06 07         	mov	[_pc], bx	; update pc
      796/    AA16 : C3                  	ret	
      797/    AA17 :                     
      798/    AA17 :                     _breakCheck:
@@ -832,12 +832,12 @@
      829/    AA42 : 57                  	push	di
      830/    AA43 : E8 D1 FF            	call	_breakCheck
      831/    AA46 :                     
-     832/    AA46 : 8B 1E 06 06         	mov	bx, [_pc]
+     832/    AA46 : 8B 1E 06 07         	mov	bx, [_pc]
      833/    AA4A : 33 C0               	xor	ax, ax
      834/    AA4C : 8A 07               	mov	al, [bx]		; get c
      835/    AA4E : 8B F0               	mov	si, ax
      836/    AA50 : 43                  	inc	bx			; pc++
-     837/    AA51 : 89 1E 06 06         	mov	[_pc], bx		; update pc
+     837/    AA51 : 89 1E 06 07         	mov	[_pc], bx		; update pc
      838/    AA55 : 8A 07               	mov	al, [bx]		; get c1
      839/    AA57 : 96                  	xchg	ax, si			; ax=c, si=c1
      840/    AA58 :                     
@@ -876,7 +876,7 @@
      873/    AA90 :                     
      874/    AA90 :                     L_79:	; ']'
      875/    AA90 : E8 15 03            	call	_pop
-     876/    AA93 : A3 06 06            	mov	[_pc], ax
+     876/    AA93 : A3 06 07            	mov	[_pc], ax
      877/    AA96 : 33 C0               	xor	ax,ax
      878/    AA98 : 5F                  	pop	di
      879/    AA99 : 5E                  	pop	si
@@ -907,7 +907,7 @@
      904/    AAB7 : 75 1D               	jne	L113		; go do_do
      905/    AAB9 :                     
      906/    AAB9 :                     	; c2= *(pc+1);e=operand();do_until(e,c2); return 0;
-     907/    AAB9 : 8B 1E 06 06         	mov	bx,word ptr _pc
+     907/    AAB9 : 8B 1E 06 07         	mov	bx,word ptr _pc
      908/    AABD : 8A 47 01            	mov	al,byte ptr [bx+1]
      909/    AAC0 : B4 00               	mov	ah,0			; ax = c2
      910/    AAC2 : 8B F8               	mov	di, ax			; save c2
@@ -1076,21 +1076,21 @@
     1073/    AB9E : 75 62               	jne	L_99
     1074/    ABA0 :                     
     1075/    ABA0 :                     L_100: ; pc++
-    1076/    ABA0 : 8B 1E 06 06         	mov	bx, [_pc]
+    1076/    ABA0 : 8B 1E 06 07         	mov	bx, [_pc]
     1077/    ABA4 : 43                  	inc	bx			; pc++
     1078/    ABA5 :                     
     1079/    ABA5 :                     	; off=expr(*pc++);
     1080/    ABA5 : 8A 07               	mov	al, [bx]
     1081/    ABA7 : B4 00               	mov	ah,0
     1082/    ABA9 : 43                  	inc	bx			; pc++
-    1083/    ABAA : 89 1E 06 06         	mov	[_pc], bx		; update pc
+    1083/    ABAA : 89 1E 06 07         	mov	[_pc], bx		; update pc
     1084/    ABAE : 50                  	push	ax
     1085/    ABAF : E8 5F 02            	call	_expr
     1086/    ABB2 : 59                  	pop	cx
     1087/    ABB3 : 89 46 FE            	mov	[bp-2], ax		; [bp-2] : off
     1088/    ABB6 :                     
     1089/    ABB6 :                     	; if(*(pc-1) !=')') 
-    1090/    ABB6 : 8B 1E 06 06         	mov	bx, [_pc]
+    1090/    ABB6 : 8B 1E 06 07         	mov	bx, [_pc]
     1091/    ABBA : 80 7F FF 29         	cmp	byte ptr [bx-1], ')'
     1092/    ABBE : 75 3B               	jne	L_101			; error
     1093/    ABC0 :                     	; e=operand();
@@ -1104,7 +1104,7 @@
     1101/    ABC8 : 8B DE               	mov	bx, si			; si : c
     1102/    ABCA :                     ;	sub	bx, 20h			; c - ' '
     1103/    ABCA : D1 E3               	shl	bx, 1
-    1104/    ABCC : 8B 9F F8 07         	mov	bx, [bx+_var]		; VARA(c)
+    1104/    ABCC : 8B 9F F8 08         	mov	bx, [bx+_var]		; VARA(c)
     1105/    ABD0 : 03 5E FE            	add	bx, [bp-2]		; +off
     1106/    ABD3 : 88 07               	mov	[bx], al		; *(((u_char*)VARA(c)+off))=e : al
     1107/    ABD5 : 33 C0               	xor	ax,ax
@@ -1122,7 +1122,7 @@
     1119/    ABE2 : 8B DE               	mov	bx, si			; si = c
     1120/    ABE4 :                     ;	sub	bx, 20h			; c - ' '
     1121/    ABE4 : D1 E3               	shl	bx, 1
-    1122/    ABE6 : 8B 9F F8 07         	mov	bx, [bx+_var]		; VARA(c)
+    1122/    ABE6 : 8B 9F F8 08         	mov	bx, [bx+_var]		; VARA(c)
     1123/    ABEA : 8B 56 FE            	mov	dx, [bp-2]		; off
     1124/    ABED : D1 E2               	shl	dx, 1			; off*2
     1125/    ABEF : 03 DA               	add	bx,dx
@@ -1146,10 +1146,10 @@
     1143/    AC05 : 8B DE               	mov	bx,si			; si : c
     1144/    AC07 :                     ;	sub	bx, 20h
     1145/    AC07 : D1 E3               	shl	bx,1
-    1146/    AC09 : 89 87 F8 07         	mov	[bx+_var], ax		; VARA(c)=e
+    1146/    AC09 : 89 87 F8 08         	mov	[bx+_var], ax		; VARA(c)=e
     1147/    AC0D :                     
     1148/    AC0D : 33 C0               	xor	ax, ax
-    1149/    AC0F : 8B 1E 06 06         	mov	bx, [_pc]
+    1149/    AC0F : 8B 1E 06 07         	mov	bx, [_pc]
     1150/    AC13 : 8A 47 FF            	mov	al, [bx-1]
     1151/    AC16 : 3C 2C               	cmp	al, ','
     1152/    AC18 : 75 1D               	jne	L197
@@ -1157,13 +1157,13 @@
     1154/    AC1A : 8A 07               	mov	al, [bx]
     1155/    AC1C : 8B F0               	mov	si, ax			; c= *pc
     1156/    AC1E : 43                  	inc	bx			; pc++
-    1157/    AC1F : 89 1E 06 06         	mov	[_pc], bx		; update pc
+    1157/    AC1F : 89 1E 06 07         	mov	[_pc], bx		; update pc
     1158/    AC23 : 56                  	push	si			; push c
     1159/    AC24 : E8 EA 01            	call	_expr
     1160/    AC27 : 59                  	pop	cx
     1161/    AC28 : 8B F0               	mov	si, ax			; si : e
     1162/    AC2A :                     
-    1163/    AC2A : FF 36 06 06         	push	[_pc]
+    1163/    AC2A : FF 36 06 07         	push	[_pc]
     1164/    AC2E : E8 95 01            	call	_push
     1165/    AC31 : 59                  	pop	cx
     1166/    AC32 : 56                  	push	si			; push e
@@ -1185,29 +1185,29 @@
     1182/    AC48 :                     
     1183/    AC48 :                     ;	sub	bx,' '
     1184/    AC48 : D1 E3               	shl	bx,1			; bx: var offset
-    1185/    AC4A : 89 87 F8 07         	mov	[bx+_var], ax		; VARA(val)=e;
+    1185/    AC4A : 89 87 F8 08         	mov	[bx+_var], ax		; VARA(val)=e;
     1186/    AC4E :                     
-    1187/    AC4E : 8B 1E 08 06         	mov	bx, [_sp]
+    1187/    AC4E : 8B 1E 08 07         	mov	bx, [_sp]
     1188/    AC52 : D1 E3               	shl	bx,1
     1189/    AC54 :                     
     1190/    AC54 :                     	; if(e>stack[sp])
-    1191/    AC54 : 3B 87 50 07         	cmp	ax, [bx+_stack]		; ax = e:([bp+4])
+    1191/    AC54 : 3B 87 50 08         	cmp	ax, [bx+_stack]		; ax = e:([bp+4])
     1192/    AC58 : 7E 07               	jle	L_115
-    1193/    AC5A : 83 2E 08 06 02      	sub	word ptr [_sp], 2
+    1193/    AC5A : 83 2E 08 07 02      	sub	word ptr [_sp], 2
     1194/    AC5F : 5D                  	pop	bp
     1195/    AC60 : C3                  	ret
     1196/    AC61 :                     
     1197/    AC61 :                     L_115: ; repeat
-    1198/    AC61 : 8B 1E 08 06         	mov	bx, [_sp]
+    1198/    AC61 : 8B 1E 08 07         	mov	bx, [_sp]
     1199/    AC65 : 4B                  	dec	bx
     1200/    AC66 : D1 E3               	shl	bx,1
-    1201/    AC68 : 8B 87 50 07         	mov	ax, [bx+_stack]
-    1202/    AC6C : A3 06 06            	mov	[_pc], ax
+    1201/    AC68 : 8B 87 50 08         	mov	ax, [bx+_stack]
+    1202/    AC6C : A3 06 07            	mov	[_pc], ax
     1203/    AC6F : 5D                  	pop	bp
     1204/    AC70 : C3                  	ret	
     1205/    AC71 :                     
     1206/    AC71 :                     _do_do:
-    1207/    AC71 : FF 36 06 06         	push	word ptr _pc
+    1207/    AC71 : FF 36 06 07         	push	word ptr _pc
     1208/    AC75 : E8 4E 01            	call	_push
     1209/    AC78 : 59                  	pop	cx
     1210/    AC79 :                     
@@ -1224,10 +1224,10 @@
     1221/    AC84 : 83 7E 04 00         	cmp	word ptr [bp+4],0
     1222/    AC88 : 75 0E               	jne	L_118
     1223/    AC8A :                     
-    1224/    AC8A : FF 36 06 06         	push	word ptr _pc
+    1224/    AC8A : FF 36 06 07         	push	word ptr _pc
     1225/    AC8E : E8 C4 FA            	call	_skipLine
     1226/    AC91 : 59                  	pop	cx
-    1227/    AC92 : A3 06 06            	mov	word ptr _pc,ax
+    1227/    AC92 : A3 06 07            	mov	word ptr _pc,ax
     1228/    AC95 :                     
     1229/    AC95 : E8 53 FD            	call	_topOfLine
     1230/    AC98 :                     L_118:
@@ -1254,7 +1254,7 @@
     1251/    ACB3 : E8 B4 FA            	call	_searchLine
     1252/    ACB6 : 59                  	pop	cx		; dummy
     1253/    ACB7 : 59                  	pop	cx		; dummy
-    1254/    ACB8 : A3 06 06            	mov	[_pc] ,ax
+    1254/    ACB8 : A3 06 07            	mov	[_pc] ,ax
     1255/    ACBB : E8 2D FD            	call	_topOfLine
     1256/    ACBE :                     
     1257/    ACBE : 8B E5               	mov	sp,bp
@@ -1274,10 +1274,10 @@
     1271/    ACD3 : 59                  	pop	cx		; dummy
     1272/    ACD4 : 59                  	pop	cx
     1273/    ACD5 : 8B F0               	mov	si,ax		; si <- p
-    1274/    ACD7 : FF 36 06 06         	push	[_pc]
+    1274/    ACD7 : FF 36 06 07         	push	[_pc]
     1275/    ACDB : E8 E8 00            	call	_push
     1276/    ACDE : 59                  	pop	cx		; dummy
-    1277/    ACDF : 89 36 06 06         	mov	[_pc], si
+    1277/    ACDF : 89 36 06 07         	mov	[_pc], si
     1278/    ACE3 : E8 05 FD            	call	_topOfLine
     1279/    ACE6 : 5E                  	pop	si
     1280/    ACE7 : 8B E5               	mov	sp,bp
@@ -1319,7 +1319,7 @@
     1316/    AD11 : 3C 28               	cmp	al,40
     1317/    AD13 : 75 26               	jne	dpr137
     1318/    AD15 :                     
-    1319/    AD15 : FF 06 06 06         	inc	word ptr _pc
+    1319/    AD15 : FF 06 06 07         	inc	word ptr _pc
     1320/    AD19 : 50                  	push	ax			; push c1
     1321/    AD1A : E8 BC 02            	call	_term
     1322/    AD1D : 89 46 FE            	mov	word ptr [bp-2],ax	; digit
@@ -1330,7 +1330,7 @@
     1327/    AD25 : FF 76 FE            	push	word ptr [bp-2]		; digit
     1328/    AD28 : 56                  	push	si			; e
     1329/    AD29 :                     
-    1330/    AD29 : B8 B0 06            	mov	ax, _lky_buf
+    1330/    AD29 : B8 B0 07            	mov	ax, _lky_buf
     1331/    AD2C : 50                  	push	ax
     1332/    AD2D : E8 85 FB            	call	_mk_dStr
     1333/    AD30 : 58                  	pop	ax			; form
@@ -1348,7 +1348,7 @@
     1345/    AD3C : E8 AB 00            	call	_operand
     1346/    AD3F : 8B F0               	mov	si,ax		; si = e
     1347/    AD41 : 58                  	pop	ax		; restore c1
-    1348/    AD42 : BF B0 06            	mov	di, _lky_buf
+    1348/    AD42 : BF B0 07            	mov	di, _lky_buf
     1349/    AD45 :                     
     1350/    AD45 : 3D 24 00            	cmp	ax,36
     1351/    AD48 : 74 1F               	je	dpr140
@@ -1401,7 +1401,7 @@
     1398/    AD8D : C3                  	ret	
     1399/    AD8E :                     
     1400/    AD8E :                     _do_pr:
-    1401/    AD8E : 8B 1E 06 06         	mov	bx, [_pc]
+    1401/    AD8E : 8B 1E 06 07         	mov	bx, [_pc]
     1402/    AD92 :                     L_136:
     1403/    AD92 : 8A 07               	mov	al, [bx]	; get *pc
     1404/    AD94 : 43                  	inc	bx
@@ -1416,29 +1416,29 @@
     1413/    ADA2 :                     L_139:
     1414/    ADA2 : 4B                  	dec	bx
     1415/    ADA3 :                     L_140:
-    1416/    ADA3 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1416/    ADA3 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1417/    ADA7 : C3                  	ret
     1418/    ADA8 :                     
     1419/    ADA8 :                     _pop:
-    1420/    ADA8 : 83 3E 08 06 00      	cmp	word ptr _sp,0
+    1420/    ADA8 : 83 3E 08 07 00      	cmp	word ptr _sp,0
     1421/    ADAD : 7D 07               	jge	L_142
     1422/    ADAF : B8 C1 B4            	mov	ax, stkunfm_
     1423/    ADB2 : 50                  	push	ax
     1424/    ADB3 : E8 74 04            	call	_er_boot
     1425/    ADB6 :                     
     1426/    ADB6 :                     L_142:
-    1427/    ADB6 : A1 08 06            	mov	ax,word ptr _sp
-    1428/    ADB9 : FF 0E 08 06         	dec	word ptr _sp
+    1427/    ADB6 : A1 08 07            	mov	ax,word ptr _sp
+    1428/    ADB9 : FF 0E 08 07         	dec	word ptr _sp
     1429/    ADBD : 8B D8               	mov	bx,ax
     1430/    ADBF : D1 E3               	shl	bx,1
-    1431/    ADC1 : 8B 87 50 07         	mov	ax,word ptr _stack[bx]
+    1431/    ADC1 : 8B 87 50 08         	mov	ax,word ptr _stack[bx]
     1432/    ADC5 : C3                  	ret	
     1433/    ADC6 :                     
     1434/    ADC6 :                     _push:
     1435/    ADC6 : 55                  	push	bp
     1436/    ADC7 : 8B EC               	mov	bp,sp
     1437/    ADC9 :                     
-    1438/    ADC9 : 83 3E 08 06 63      	cmp	word ptr _sp,99
+    1438/    ADC9 : 83 3E 08 07 63      	cmp	word ptr _sp,99
     1439/    ADCE : 7C 07               	jl	L_144
     1440/    ADD0 : B8 C3 B4            	mov	ax, stkovfm_
     1441/    ADD3 : 50                  	push	ax
@@ -1446,16 +1446,16 @@
     1443/    ADD7 :                     
     1444/    ADD7 :                     L_144:
     1445/    ADD7 : 8B 46 04            	mov	ax,word ptr [bp+4]
-    1446/    ADDA : FF 06 08 06         	inc	word ptr _sp
-    1447/    ADDE : 8B 1E 08 06         	mov	bx,word ptr _sp
+    1446/    ADDA : FF 06 08 07         	inc	word ptr _sp
+    1447/    ADDE : 8B 1E 08 07         	mov	bx,word ptr _sp
     1448/    ADE2 : D1 E3               	shl	bx,1
-    1449/    ADE4 : 89 87 50 07         	mov	word ptr _stack[bx],ax
+    1449/    ADE4 : 89 87 50 08         	mov	word ptr _stack[bx],ax
     1450/    ADE8 : 5D                  	pop	bp
     1451/    ADE9 : C3                  	ret	
     1452/    ADEA :                     
     1453/    ADEA :                     _operand:
     1454/    ADEA : 56                  	push	si
-    1455/    ADEB : 8B 36 06 06         	mov	si, [_pc]	; si : pc
+    1455/    ADEB : 8B 36 06 07         	mov	si, [_pc]	; si : pc
     1456/    ADEF :                     
     1457/    ADEF :                     opr_loop:
     1458/    ADEF : 8A 04               	mov	al, [si]	; al : x = *pc
@@ -1475,7 +1475,7 @@
     1472/    AE01 : 8A 04               	mov	al, [si]	; al : x = *pc
     1473/    AE03 : B4 00               	mov	ah, 0
     1474/    AE05 : 46                  	inc	si
-    1475/    AE06 : 89 36 06 06         	mov	[_pc], si	; update pc
+    1475/    AE06 : 89 36 06 07         	mov	[_pc], si	; update pc
     1476/    AE0A : 50                  	push	ax
     1477/    AE0B : E8 03 00            	call	_expr		; return ax : e
     1478/    AE0E : 59                  	pop	cx
@@ -1497,12 +1497,12 @@
     1494/    AE20 : 8B F0               	mov	si, ax			; si : e
     1495/    AE22 :                     
     1496/    AE22 :                     L_154:	; for(;;) {
-    1497/    AE22 : 8B 1E 06 06         	mov	bx, [_pc]
+    1497/    AE22 : 8B 1E 06 07         	mov	bx, [_pc]
     1498/    AE26 : 8A 07               	mov	al, [bx]
     1499/    AE28 : B4 00               	mov	ah,0
     1500/    AE2A : 89 46 FC            	mov	word ptr [bp-4], ax	; [bp-4] : o
     1501/    AE2D : 43                  	inc	bx		; pc++
-    1502/    AE2E : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1502/    AE2E : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1503/    AE32 :                     
     1504/    AE32 :                     	; ax = o
     1505/    AE32 : B9 0C 00            	mov	cx,12
@@ -1539,7 +1539,7 @@
     1536/    AE6E :                     
     1537/    AE6E :                     L_156: ; '\0'
     1538/    AE6E : 4B                  	dec	bx		; pc--
-    1539/    AE6F : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1539/    AE6F : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1540/    AE73 :                     
     1541/    AE73 :                     L_157: ; ' '  ')'  ','
     1542/    AE73 : 8B C6               	mov	ax,si		; ax <- si : e
@@ -1551,23 +1551,23 @@
     1548/    AE7B :                     
     1549/    AE7B :                     L_177:
     1550/    AE7B : B0 20               	mov	al, ' '
-    1551/    AE7D : A2 0C 06            	mov	[mm], al
+    1551/    AE7D : A2 0C 07            	mov	[mm], al
     1552/    AE80 : 8B 46 FC            	mov	ax, [bp-4]	; [ bp-4] : o
     1553/    AE83 : B4 3F               	mov	ah, '?'
-    1554/    AE85 : A3 0D 06            	mov	[mm+1], ax
-    1555/    AE88 : A3 0D 06            	mov	[mm+1], ax
-    1556/    AE8B : B8 0C 06            	mov	ax, mm
+    1554/    AE85 : A3 0D 07            	mov	[mm+1], ax
+    1555/    AE88 : A3 0D 07            	mov	[mm+1], ax
+    1556/    AE8B : B8 0C 07            	mov	ax, mm
     1557/    AE8E : 50                  	push	ax
     1558/    AE8F : E8 45 03            	call	_errMsg
     1559/    AE92 :                     	; no return
     1560/    AE92 :                     
     1561/    AE92 :                     L_160:	; '<'
-    1562/    AE92 : 8B 1E 06 06         	mov	bx, [_pc]
+    1562/    AE92 : 8B 1E 06 07         	mov	bx, [_pc]
     1563/    AE96 : 8A 07               	mov	al, [bx]
     1564/    AE98 : B4 00               	mov	ah, 0		; ax : o1
     1565/    AE9A : 89 46 FE            	mov	[bp-2], ax	; [bp-2] : o1
     1566/    AE9D : 43                  	inc	bx
-    1567/    AE9E : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1567/    AE9E : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1568/    AEA2 :                     
     1569/    AEA2 :                     	; ax = o1
     1570/    AEA2 : 3C 3D               	cmp	al, 61		; '='
@@ -1577,11 +1577,11 @@
     1574/    AEA8 : 75 40               	jne	L_164		; goto default
     1575/    AEAA :                     
     1576/    AEAA :                     	; '>'
-    1577/    AEAA : 8B 1E 06 06         	mov	bx, [_pc]
+    1577/    AEAA : 8B 1E 06 07         	mov	bx, [_pc]
     1578/    AEAE : 8A 07               	mov	al, [bx]	; al = *pc
     1579/    AEB0 : B4 00               	mov	ah,0		;
     1580/    AEB2 : 43                  	inc	bx		; pc++
-    1581/    AEB3 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1581/    AEB3 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1582/    AEB7 :                     
     1583/    AEB7 : 50                  	push	ax
     1584/    AEB8 : E8 1E 01            	call	_term
@@ -1601,7 +1601,7 @@
     1598/    AECC : 8A 07               	mov	al,byte ptr [bx]
     1599/    AECE : B4 00               	mov	ah,0
     1600/    AED0 : 43                  	inc	bx
-    1601/    AED1 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1601/    AED1 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1602/    AED5 :                     
     1603/    AED5 : 50                  	push	ax
     1604/    AED6 : E8 00 01            	call	_term
@@ -1631,23 +1631,23 @@
     1628/    AEFE : E9 21 FF            	jmp	L_154		; loop -> for(;;)
     1629/    AF01 :                     
     1630/    AF01 :                     L_165: ; '>'
-    1631/    AF01 : 8B 1E 06 06         	mov	bx, [_pc]
+    1631/    AF01 : 8B 1E 06 07         	mov	bx, [_pc]
     1632/    AF05 : 8A 07               	mov	al, [bx]
     1633/    AF07 : B4 00               	mov	ah,0
     1634/    AF09 : 89 46 FE            	mov	[bp-2], ax	; [bp-2] : o1
     1635/    AF0C : 43                  	inc	bx		; pc++
-    1636/    AF0D : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1636/    AF0D : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1637/    AF11 :                     
     1638/    AF11 :                     	; ax = o1
     1639/    AF11 : 3C 3D               	cmp	al, 61		; '='
     1640/    AF13 : 75 22               	jne	L_168		; goto default
     1641/    AF15 :                     
     1642/    AF15 :                     	;'='
-    1643/    AF15 : 8B 1E 06 06         	mov	bx, [_pc]
+    1643/    AF15 : 8B 1E 06 07         	mov	bx, [_pc]
     1644/    AF19 : 8A 07               	mov	al, [bx]	; al = *pc
     1645/    AF1B : B4 00               	mov	ah,0		;
     1646/    AF1D : 43                  	inc	bx		; pc++
-    1647/    AF1E : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1647/    AF1E : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1648/    AF22 :                     
     1649/    AF22 : 50                  	push	ax
     1650/    AF23 : E8 B3 00            	call	_term
@@ -1678,11 +1678,11 @@
     1675/    AF4E :                     
     1676/    AF4E :                     
     1677/    AF4E :                     L_169: ; '+'
-    1678/    AF4E : 8B 1E 06 06         	mov	bx, [_pc]
+    1678/    AF4E : 8B 1E 06 07         	mov	bx, [_pc]
     1679/    AF52 : 8A 07               	mov	al, [bx]	; al = *pc
     1680/    AF54 : B4 00               	mov	ah,0		;
     1681/    AF56 : 43                  	inc	bx		; pc++
-    1682/    AF57 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1682/    AF57 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1683/    AF5B :                     
     1684/    AF5B : 50                  	push	ax
     1685/    AF5C : E8 7A 00            	call	_term
@@ -1691,11 +1691,11 @@
     1688/    AF62 : E9 BD FE            	jmp	L_154
     1689/    AF65 :                     
     1690/    AF65 :                     L_170: ; '-'
-    1691/    AF65 : 8B 1E 06 06         	mov	bx, [_pc]
+    1691/    AF65 : 8B 1E 06 07         	mov	bx, [_pc]
     1692/    AF69 : 8A 07               	mov	al, [bx]	; al = *pc
     1693/    AF6B : B4 00               	mov	ah,0		;
     1694/    AF6D : 43                  	inc	bx		; pc++
-    1695/    AF6E : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1695/    AF6E : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1696/    AF72 :                     
     1697/    AF72 : 50                  	push	ax
     1698/    AF73 : E8 63 00            	call	_term		; ax : op2
@@ -1705,11 +1705,11 @@
     1702/    AF79 : E9 A6 FE            	jmp	L_154
     1703/    AF7C :                     
     1704/    AF7C :                     L_171: ; '*'
-    1705/    AF7C : 8B 1E 06 06         	mov	bx, [_pc]
+    1705/    AF7C : 8B 1E 06 07         	mov	bx, [_pc]
     1706/    AF80 : 8A 07               	mov	al, [bx]	; al = *pc
     1707/    AF82 : B4 00               	mov	ah,0		;
     1708/    AF84 : 43                  	inc	bx		; pc++
-    1709/    AF85 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1709/    AF85 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1710/    AF89 :                     
     1711/    AF89 : 50                  	push	ax
     1712/    AF8A : E8 4C 00            	call	_term		; ax : op2
@@ -1721,11 +1721,11 @@
     1718/    AF92 : E9 8D FE            	jmp	L_154
     1719/    AF95 :                     
     1720/    AF95 :                     L_172: ; '/'
-    1721/    AF95 : 8B 1E 06 06         	mov	bx, [_pc]
+    1721/    AF95 : 8B 1E 06 07         	mov	bx, [_pc]
     1722/    AF99 : 8A 07               	mov	al, [bx]	; al = *pc
     1723/    AF9B : B4 00               	mov	ah,0		;
     1724/    AF9D : 43                  	inc	bx		; pc++
-    1725/    AF9E : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1725/    AF9E : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1726/    AFA2 :                     
     1727/    AFA2 : 50                  	push	ax
     1728/    AFA3 : E8 33 00            	call	_term		; ax : op2
@@ -1736,16 +1736,16 @@
     1733/    AFAB : 99                  	cwd	
     1734/    AFAC : F7 FF               	idiv	di		; ax = e / op2
     1735/    AFAE :                     ;	mov	[_var+10], dx	; % = dx
-    1736/    AFAE : 89 16 42 08         	mov	[_var+74], dx	; 74 : '%' *2
+    1736/    AFAE : 89 16 42 09         	mov	[_var+74], dx	; 74 : '%' *2
     1737/    AFB2 : 8B F0               	mov	si, ax		; si = e / op2
     1738/    AFB4 : E9 6B FE            	jmp	L_154
     1739/    AFB7 :                     
     1740/    AFB7 :                     L_173: ; '='
-    1741/    AFB7 : 8B 1E 06 06         	mov	bx, [_pc]
+    1741/    AFB7 : 8B 1E 06 07         	mov	bx, [_pc]
     1742/    AFBB : 8A 07               	mov	al, [bx]	; al = *pc
     1743/    AFBD : B4 00               	mov	ah,0		;
     1744/    AFBF : 43                  	inc	bx		; pc++
-    1745/    AFC0 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1745/    AFC0 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1746/    AFC4 :                     
     1747/    AFC4 : 50                  	push	ax
     1748/    AFC5 : E8 11 00            	call	_term		; ax : op2
@@ -1821,16 +1821,16 @@
     1818/    B033 : C3                  	ret	
     1819/    B034 :                     
     1820/    B034 :                     tm208: ; (
-    1821/    B034 : 8B 1E 06 06         	mov	bx, [_pc]
+    1821/    B034 : 8B 1E 06 07         	mov	bx, [_pc]
     1822/    B038 : 8A 07               	mov	al, [bx]
     1823/    B03A : B4 00               	mov	ah,0
     1824/    B03C : 43                  	inc	bx		; pc++
-    1825/    B03D : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1825/    B03D : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1826/    B041 : 50                  	push	ax		; *(pc-1)
     1827/    B042 : E8 CC FD            	call	_expr		; return ax :e
     1828/    B045 : 59                  	pop	cx
     1829/    B046 :                     
-    1830/    B046 : 8B 1E 06 06         	mov	bx, [_pc]
+    1830/    B046 : 8B 1E 06 07         	mov	bx, [_pc]
     1831/    B04A : 8A 4F FF            	mov	cl, [bx-1]
     1832/    B04D : 80 F9 29            	cmp	cl, ')'		; *(pc-1) = ')' ?
     1833/    B050 : 75 06               	jne	tm207e		; return e, if *(pc-1) == ')'
@@ -1847,11 +1847,11 @@
     1844/    B05F :                     	; no return
     1845/    B05F :                     
     1846/    B05F :                     tm210: ; +
-    1847/    B05F : 8B 1E 06 06         	mov	bx, [_pc]
+    1847/    B05F : 8B 1E 06 07         	mov	bx, [_pc]
     1848/    B063 : 8A 07               	mov	al, [bx]
     1849/    B065 : B4 00               	mov	ah,0
     1850/    B067 : 43                  	inc	bx		; pc++
-    1851/    B068 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1851/    B068 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1852/    B06C : 50                  	push	ax
     1853/    B06D : E8 69 FF            	call	_term		; return ax : e
     1854/    B070 : 59                  	pop	cx
@@ -1865,11 +1865,11 @@
     1862/    B07C : C3                  	ret	
     1863/    B07D :                     
     1864/    B07D :                     tm211: ; -
-    1865/    B07D : 8B 1E 06 06         	mov	bx, [_pc]
+    1865/    B07D : 8B 1E 06 07         	mov	bx, [_pc]
     1866/    B081 : 8A 07               	mov	al, [bx]
     1867/    B083 : B4 00               	mov	ah,0
     1868/    B085 : 43                  	inc	bx		; pc++
-    1869/    B086 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1869/    B086 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1870/    B08A : 50                  	push	ax
     1871/    B08B : E8 4B FF            	call	_term		; return ax : e
     1872/    B08E : 59                  	pop	cx
@@ -1881,11 +1881,11 @@
     1878/    B096 : C3                  	ret	
     1879/    B097 :                     
     1880/    B097 :                     tm212: ; #
-    1881/    B097 : 8B 1E 06 06         	mov	bx, [_pc]
+    1881/    B097 : 8B 1E 06 07         	mov	bx, [_pc]
     1882/    B09B : 8A 07               	mov	al, [bx]
     1883/    B09D : B4 00               	mov	ah,0
     1884/    B09F : 43                  	inc	bx		; pc++
-    1885/    B0A0 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1885/    B0A0 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1886/    B0A4 : 50                  	push	ax
     1887/    B0A5 : E8 31 FF            	call	_term		; return ax : e
     1888/    B0A8 : 59                  	pop	cx
@@ -1902,11 +1902,11 @@
     1899/    B0B4 : E8 CA F5            	call	_rand		; return ax : random number
     1900/    B0B7 : 50                  	push	ax
     1901/    B0B8 :                     
-    1902/    B0B8 : 8B 1E 06 06         	mov	bx, [_pc]
+    1902/    B0B8 : 8B 1E 06 07         	mov	bx, [_pc]
     1903/    B0BC : 8A 07               	mov	al, [bx]
     1904/    B0BE : B4 00               	mov	ah,0
     1905/    B0C0 : 43                  	inc	bx		; pc++
-    1906/    B0C1 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1906/    B0C1 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1907/    B0C5 : 50                  	push	ax
     1908/    B0C6 : E8 10 FF            	call	_term		; return ax : e
     1909/    B0C9 : 59                  	pop	cx
@@ -1923,16 +1923,16 @@
     1920/    B0D8 : C3                  	ret	
     1921/    B0D9 :                     
     1922/    B0D9 :                     tm214: ; %
-    1923/    B0D9 : 8B 1E 06 06         	mov	bx, [_pc]
+    1923/    B0D9 : 8B 1E 06 07         	mov	bx, [_pc]
     1924/    B0DD : 8A 07               	mov	al, [bx]
     1925/    B0DF : B4 00               	mov	ah,0
     1926/    B0E1 : 43                  	inc	bx		; pc++
-    1927/    B0E2 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1927/    B0E2 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1928/    B0E6 : 50                  	push	ax
     1929/    B0E7 : E8 EF FE            	call	_term		; return ax : e
     1930/    B0EA : 59                  	pop	cx
     1931/    B0EB :                     ;	mov	ax, [_var+10]	; get VARA(%)
-    1932/    B0EB : A1 42 08            	mov	ax, [_var+74]	; 74 : '%' *2
+    1932/    B0EB : A1 42 09            	mov	ax, [_var+74]	; 74 : '%' *2
     1933/    B0EE : 5F                  	pop	di
     1934/    B0EF : 5E                  	pop	si
     1935/    B0F0 : 8B E5               	mov	sp,bp
@@ -1940,26 +1940,26 @@
     1937/    B0F3 : C3                  	ret	
     1938/    B0F4 :                     
     1939/    B0F4 :                     tm215: ; ?
-    1940/    B0F4 : B8 B0 06            	mov	ax, _lky_buf
+    1940/    B0F4 : B8 B0 07            	mov	ax, _lky_buf
     1941/    B0F7 : 50                  	push	ax
     1942/    B0F8 : E8 DF 01            	call	_c_gets
     1943/    B0FB : 59                  	pop	cx		; cx : lky_buf
     1944/    B0FC :                     
-    1945/    B0FC : A1 06 06            	mov	ax, [_pc]
+    1945/    B0FC : A1 06 07            	mov	ax, [_pc]
     1946/    B0FF : 89 46 FE            	mov	[bp-2], ax	; ppp = pc (save pc)
-    1947/    B102 : 89 0E 06 06         	mov	[_pc], cx	; pc = _lky_buf
+    1947/    B102 : 89 0E 06 07         	mov	[_pc], cx	; pc = _lky_buf
     1948/    B106 :                     
-    1949/    B106 : 8B 1E 06 06         	mov	bx, [_pc]
+    1949/    B106 : 8B 1E 06 07         	mov	bx, [_pc]
     1950/    B10A : 8A 07               	mov	al, [bx]
     1951/    B10C : B4 00               	mov	ah,0		; ax = *p
     1952/    B10E : 43                  	inc	bx		; pc++
-    1953/    B10F : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1953/    B10F : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1954/    B113 : 50                  	push	ax
     1955/    B114 : E8 FA FC            	call	_expr		; return ax : e
     1956/    B117 : 59                  	pop	cx
     1957/    B118 :                     
     1958/    B118 : 8B 4E FE            	mov	cx, [bp-2]	; (restore pc)
-    1959/    B11B : 89 0E 06 06         	mov	[_pc], cx	; pc = ppp
+    1959/    B11B : 89 0E 06 07         	mov	[_pc], cx	; pc = ppp
     1960/    B11F : 5F                  	pop	di
     1961/    B120 : 5E                  	pop	si
     1962/    B121 : 8B E5               	mov	sp,bp
@@ -1967,15 +1967,15 @@
     1964/    B124 : C3                  	ret	
     1965/    B125 :                     
     1966/    B125 :                     tm216: ; "
-    1967/    B125 : 8B 1E 06 06         	mov	bx, [_pc]
+    1967/    B125 : 8B 1E 06 07         	mov	bx, [_pc]
     1968/    B129 : 8A 07               	mov	al, [bx]
     1969/    B12B : B4 00               	mov	ah,0		; e : ax = *p
     1970/    B12D : 43                  	inc	bx		; pc++
-    1971/    B12E : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1971/    B12E : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1972/    B132 :                     
     1973/    B132 : 8A 0F               	mov	cl, [bx]	; cl = *pc
     1974/    B134 : 43                  	inc	bx		; pc++
-    1975/    B135 : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    1975/    B135 : 89 1E 06 07         	mov	[_pc], bx	; update pc
     1976/    B139 : 80 F9 22            	cmp	cl, 34		; '"'?
     1977/    B13C : 75 06               	jne	tm216e		; return ax : e
     1978/    B13E : 5F                  	pop	di
@@ -1998,7 +1998,7 @@
     1995/    B14F : 3C 39               	cmp	al, '9'
     1996/    B151 : 7F 12               	jg	tm219		; jump, if c > '9'
     1997/    B153 :                     
-    1998/    B153 : FF 0E 06 06         	dec	word ptr _pc
+    1998/    B153 : FF 0E 06 07         	dec	word ptr _pc
     1999/    B157 : 8D 46 FA            	lea	ax, [bp-6]
     2000/    B15A : 50                  	push	ax		; &f
     2001/    B15B : E8 91 02            	call	_getNum		; ax : e
@@ -2020,20 +2020,20 @@
     2017/    B172 :                     
     2018/    B172 :                     tm221:
     2019/    B172 :                     	; pc++
-    2020/    B172 : 8B 1E 06 06         	mov	bx, [_pc]
+    2020/    B172 : 8B 1E 06 07         	mov	bx, [_pc]
     2021/    B176 : 43                  	inc	bx		; pc++
     2022/    B177 :                     
     2023/    B177 : 8A 07               	mov	al, [bx]	; al : *pc
     2024/    B179 : B4 00               	mov	ah,0
     2025/    B17B : 43                  	inc	bx		; pc++
-    2026/    B17C : 89 1E 06 06         	mov	[_pc], bx	; update pc
+    2026/    B17C : 89 1E 06 07         	mov	[_pc], bx	; update pc
     2027/    B180 :                     
     2028/    B180 : 50                  	push	ax
     2029/    B181 : E8 8D FC            	call	_expr		; return ax : e
     2030/    B184 : 59                  	pop	cx
     2031/    B185 : 8B F8               	mov	di, ax		; di : e
     2032/    B187 :                     
-    2033/    B187 : 8B 1E 06 06         	mov	bx, [_pc]
+    2033/    B187 : 8B 1E 06 07         	mov	bx, [_pc]
     2034/    B18B : 8A 47 FF            	mov	al, [bx-1]	; al : *(pc-1)
     2035/    B18E :                     
     2036/    B18E : 3C 29               	cmp	al, ')'
@@ -2042,7 +2042,7 @@
     2039/    B192 : 8B 5E 04            	mov	bx, [bp+4]	; bx = c
     2040/    B195 :                     ;	sub	bl, ' '		; bl - ' '
     2041/    B195 : D1 E3               	shl	bx,1		; bx : offset VARA(c)
-    2042/    B197 : 8B 9F F8 07         	mov	bx, [bx+_var]	; bx : VARA(c)
+    2042/    B197 : 8B 9F F8 08         	mov	bx, [bx+_var]	; bx : VARA(c)
     2043/    B19B :                     
     2044/    B19B : 8B C6               	mov	ax,si		; ax : vmode
     2045/    B19D : 3C 28               	cmp	al,'('
@@ -2080,7 +2080,7 @@
     2077/    B1C1 : 8B 5E 04            	mov	bx, [bp+4]	; bx = c
     2078/    B1C4 :                     ;	sub	bl, ' '		; bl - ' '
     2079/    B1C4 : D1 E3               	shl	bx,1		; bx : offset VARA(c)
-    2080/    B1C6 : 8B 87 F8 07         	mov	ax, [bx+_var]	; ax : var
+    2080/    B1C6 : 8B 87 F8 08         	mov	ax, [bx+_var]	; ax : var
     2081/    B1CA : 5F                  	pop	di
     2082/    B1CB : 5E                  	pop	si
     2083/    B1CC : 8B E5               	mov	sp,bp
@@ -2107,7 +2107,7 @@
     2104/    B1E8 : E8 D2 F4            	call	_c_puts
     2105/    B1EB : 59                  	pop	cx
     2106/    B1EC :                     
-    2107/    B1EC : 83 3E 0A 06 00      	cmp	word ptr _lno,0
+    2107/    B1EC : 83 3E 0A 07 00      	cmp	word ptr _lno,0
     2108/    B1F1 : 74 21               	je	errm229
     2109/    B1F3 :                     
     2110/    B1F3 : B8 C5 B4            	mov	ax, _in_m
@@ -2117,7 +2117,7 @@
     2114/    B1FB :                     
     2115/    B1FB : B8 01 00            	mov	ax,1
     2116/    B1FE : 50                  	push	ax
-    2117/    B1FF : FF 36 0A 06         	push	word ptr _lno
+    2117/    B1FF : FF 36 0A 07         	push	word ptr _lno
     2118/    B203 : 8D 46 F8            	lea	ax,word ptr [bp-8]
     2119/    B206 : 50                  	push	ax
     2120/    B207 : E8 AB F6            	call	_mk_dStr
@@ -2434,7 +2434,7 @@
     2431/    B3F4 :                     	
     2432/    B3F4 : 33 C0               	xor	ax, ax			;  ax : n=0
     2433/    B3F6 : 8B C8               	mov	cx, ax			;  cx : *f = 0
-    2434/    B3F8 : 8B 36 06 06         	mov	si, [_pc]		; [di] : *p
+    2434/    B3F8 : 8B 36 06 07         	mov	si, [_pc]		; [di] : *p
     2435/    B3FC :                     
     2436/    B3FC :                     gt_nxtc:
     2437/    B3FC : 8A 1C               	mov	bl, [si]		; c : bl = *pc
@@ -2454,7 +2454,7 @@
     2451/    B417 : EB E3               	jmp	gt_nxtc
     2452/    B419 :                     
     2453/    B419 :                     L_289:
-    2454/    B419 : 89 36 06 06         	mov	[_pc], si		; pc : next point
+    2454/    B419 : 89 36 06 07         	mov	[_pc], si		; pc : next point
     2455/    B41D : 8B 5E 04            	mov	bx, [bp+4]
     2456/    B420 : 89 0F               	mov	[bx], cx		; *f = 0 or 1
     2457/    B422 : 59                  	pop	cx
@@ -2472,7 +2472,7 @@
     2469/    B42E : 8B C8               	mov	cx, ax
     2470/    B430 : 8B D8               	mov	bx, ax		; *f=0
     2471/    B432 :                     
-    2472/    B432 : 8B 36 06 06         	mov	si, [_pc]	; [si] : *pc
+    2472/    B432 : 8B 36 06 07         	mov	si, [_pc]	; [si] : *pc
     2473/    B436 :                     
     2474/    B436 :                     gh_loop:
     2475/    B436 : 8A 14               	mov	dl, [si]	; get char
@@ -2499,7 +2499,7 @@
     2496/    B460 : EB F0               	jmp	calc_no
     2497/    B462 :                     
     2498/    B462 :                     hex_end:
-    2499/    B462 : 89 36 06 06         	mov	[_pc], si	; update pc
+    2499/    B462 : 89 36 06 07         	mov	[_pc], si	; update pc
     2500/    B466 :                     
     2501/    B466 : 8B CB               	mov	cx, bx		;
     2502/    B468 : 8B 5E 04            	mov	bx, [bp+4]	;
@@ -2511,7 +2511,7 @@
     2508/    B470 :                     
     2509/    B470 :                     _newText:
     2510/    B470 :                     ;	mov	bx,word ptr _var+12
-    2511/    B470 : 8B 1E 44 08         	mov	bx,word ptr _var+76	; 76 : '&' *2
+    2511/    B470 : 8B 1E 44 09         	mov	bx,word ptr _var+76	; 76 : '&' *2
     2512/    B474 : 80 3F FF            	cmp	byte ptr [bx],255
     2513/    B477 : 74 07               	je	L_302
     2514/    B479 : B8 BB B4            	mov	ax, t_lockm
@@ -2524,12 +2524,12 @@
     2521/    B484 :                     
     2522/    B484 :                     _newText1:
     2523/    B484 :                     ;	mov	ax,word ptr _var+58
-    2524/    B484 : A1 72 08            	mov	ax,word ptr _var+122	; 122 : '=' *2
+    2524/    B484 : A1 72 09            	mov	ax,word ptr _var+122	; 122 : '=' *2
     2525/    B487 :                     ;	mov	word ptr _var+12,ax
-    2526/    B487 : A3 44 08            	mov	word ptr _var+76,ax	; 76 : '&' *2
+    2526/    B487 : A3 44 09            	mov	word ptr _var+76,ax	; 76 : '&' *2
     2527/    B48A :                     
     2528/    B48A :                     ;	mov	bx,word ptr _var+12
-    2529/    B48A : 8B 1E 44 08         	mov	bx,word ptr _var+76	; 76 : '&' *2
+    2529/    B48A : 8B 1E 44 09         	mov	bx,word ptr _var+76	; 76 : '&' *2
     2530/    B48E : C6 07 FF            	mov	byte ptr [bx],255
     2531/    B491 : C3                  	ret	
     2532/    B492 :                     
@@ -2568,28 +2568,28 @@
     2555/    B500 :                     CODE_END:
     2556/    B500 :                     
     2557/       0 :                     	SEGMENT	DATA
-    2558/     600 :                     	org	TB_WORK
-    2559/     600 :                     
-    2560/     600 :                     ; valiable or pointer
-    2561/     600 :                     SEED:		ds	2
-    2562/     602 :                     SEEDX:		ds	2
-    2563/     604 :                     s_val:		ds	2
-    2564/     606 :                     _pc:		ds	2
-    2565/     608 :                     _sp:		ds	2
-    2566/     60A :                     _lno:		ds	2
-    2567/     60C :                     
-    2568/     60C :                     ; buffer
-    2569/     60C :                     mm:		ds	4
-    2570/     610 :                     _lin:		ds	160
-    2571/     6B0 :                     _lky_buf:	ds	160
-    2572/     750 :                     _stack:		ds	200-32
-    2573/     7F8 :                     _var:		ds	256
-    2574/     8F8 :                     _text_buf:	ds	RAM_END+1 - _text_buf
+    2558/     700 :                     	org	TB_WORK
+    2559/     700 :                     
+    2560/     700 :                     ; valiable or pointer
+    2561/     700 :                     SEED:		ds	2
+    2562/     702 :                     SEEDX:		ds	2
+    2563/     704 :                     s_val:		ds	2
+    2564/     706 :                     _pc:		ds	2
+    2565/     708 :                     _sp:		ds	2
+    2566/     70A :                     _lno:		ds	2
+    2567/     70C :                     
+    2568/     70C :                     ; buffer
+    2569/     70C :                     mm:		ds	4
+    2570/     710 :                     _lin:		ds	160
+    2571/     7B0 :                     _lky_buf:	ds	160
+    2572/     850 :                     _stack:		ds	200-32
+    2573/     8F8 :                     _var:		ds	256
+    2574/     9F8 :                     _text_buf:	ds	RAM_END+1 - _text_buf
     2575/    8000 :                     
-    2576/    8000 : =7708H               text_size	equ	RAM_END+1 - _text_buf
+    2576/    8000 : =7608H               text_size	equ	RAM_END+1 - _text_buf
     2577/    8000 :                     
     2578/    8000 :                     	end
- AS V1.42 Beta [Bld 227] - Source File gm88_cnv.asm - Page 2 - 2/28/2023 12:44:15
+ AS V1.42 Beta [Bld 227] - Source File gm88_cnv.asm - Page 2 - 3/4/2023 17:19:0
 
 
   Symbol Table (* = unused):
@@ -2600,7 +2600,7 @@
  CALC_NO :                    0B452 C | *CASESENSITIVE :                  0 - |
 *CODE_END :                   0B500 C | *COMPMODE :                       0 - |
 *CONSTPI :        3.141592653589793 - |  CSTART :                     0A6D4 C |
-*DATE :                 "2/28/2023" - |  DEBUG :                          0 - |
+*DATE :                  "3/4/2023" - |  DEBUG :                          0 - |
  DEC_COPY :                   0B395 C |  DISPLEND :                   0A98D C |
  DLI54 :                      0A981 C |  DPR136 :                     0AD88 C |
  DPR137 :                     0AD3B C |  DPR138 :                     0AD83 C |
@@ -2668,7 +2668,7 @@
  L_96 :                       0AB80 C |  L_97 :                       0AB8A C |
  L_99 :                       0AC02 C | *MACEXP :                         7 - |
  MEMM_CP :                    0B38F C |  MEM_CLEAR :                  0A618 C |
- MM :                           60C D | *MOMCPU :                      8086 - |
+ MM :                           70C D | *MOMCPU :                      8086 - |
 *MOMCPUNAME :                "8086" - | *NESTMAX :                      100 - |
  NEWL_M :                     0B4AD C |  NOOPRM_ :                    0B4CF C |
  NO_SKIP :                    0A9DE C |  NSIGN :                      0A8EB C |
@@ -2677,17 +2677,17 @@
  RDYMSG_ :                    0B4B0 C | *RELAXED :                        0 - |
  RND3 :                       0A68D C |  RND4 :                       0A6A8 C |
  RND_BASE :                    8000 - |  RND_END :                     8A00 - |
- SCP_END :                    0B3D0 C |  SEED :                         600 D |
- SEEDX :                        602 D |  SKIPA_Z :                    0A9DB C |
+ SCP_END :                    0B3D0 C |  SEED :                         700 D |
+ SEEDX :                        702 D |  SKIPA_Z :                    0A9DB C |
  SL_ENDP :                    0A792 C |  SL_LOOP :                    0A775 C |
  SL_NMCH :                    0A796 C |  ST1 :                        0B3BC C |
  START_TB :                   0A606 C |  STCOPY :                     0B3CA C |
  STC_LOOP :                   0B3AD C |  STKOVFM_ :                   0B4C3 C |
  STKUNFM_ :                   0B4C1 C |  STLEN_END :                  0B3EA C |
- STR_LOP :                    0B3E2 C |  S_VAL :                        604 D |
- TB_OFF :                     0A600 - |  TB_STACK :                     600 - |
- TB_WORK :                      600 - | *TEXT_SIZE :                   7708 - |
-*TIME :                  "12:44:15" - |  TM206 :                      0B01D C |
+ STR_LOP :                    0B3E2 C |  S_VAL :                        704 D |
+ TB_OFF :                     0A600 - |  TB_STACK :                     700 - |
+ TB_WORK :                      700 - | *TEXT_SIZE :                   7608 - |
+*TIME :                   "17:19:0" - |  TM206 :                      0B01D C |
  TM207 :                      0B02E C |  TM207E :                     0B058 C |
  TM208 :                      0B034 C |  TM210 :                      0B05F C |
  TM211 :                      0B07D C |  TM212 :                      0B097 C |
@@ -2722,27 +2722,27 @@
  _EXPR :                      0AE11 C |  _EXQT :                      0A9E3 C |
  _GETHEX :                    0B426 C |  _GETNUM :                    0B3EF C |
  _G_DECSTR :                  0A88F C |  _G_HEXSTR :                  0A917 C |
- _IN_M :                      0B4C5 C |  _LIN :                         610 D |
- _LKY_BUF :                     6B0 D |  _LNO :                         60A D |
+ _IN_M :                      0B4C5 C |  _LIN :                         710 D |
+ _LKY_BUF :                     7B0 D |  _LNO :                         70A D |
  _MACH_FIN :                  0A66F C |  _MAIN :                      0A6DA C |
  _MEMMOVE :                   0B37C C |  _MK_DSTR :                   0A8B5 C |
  _NEWLINE :                   0B2D1 C |  _NEWTEXT :                   0B470 C |
  _NEWTEXT1 :                  0B484 C |  _OPERAND :                   0ADEA C |
- _PC :                          606 D |  _POP :                       0ADA8 C |
+ _PC :                          706 D |  _POP :                       0ADA8 C |
  _PUSH :                      0ADC6 C |  _RAND :                      0A681 C |
  _SEARCHLINE :                0A76A C |  _SKIPALPHA :                 0A9C5 C |
  _SKIPBLANK :                 0A9B3 C |  _SKIPLINE :                  0A755 C |
- _SP :                          608 D |  _SRAND :                     0A673 C |
- _STACK :                       750 D |  _STRCPY :                    0B39E C |
+ _SP :                          708 D |  _SRAND :                     0A673 C |
+ _STACK :                       850 D |  _STRCPY :                    0B39E C |
  _STRLEN :                    0B3D7 C |  _TERM :                      0AFD9 C |
- _TEXT_BUF :                    8F8 D |  _TOPOFLINE :                 0A9EB C |
- _VAR :                         7F8 D |  _WARM_BOOT :                 0A645 C |
+ _TEXT_BUF :                    9F8 D |  _TOPOFLINE :                 0A9EB C |
+ _VAR :                         8F8 D |  _WARM_BOOT :                 0A645 C |
  _W_BOOT :                    0B217 C |
 
     284 symbols
      27 unused symbols
 
- AS V1.42 Beta [Bld 227] - Source File gm88_cnv.asm - Page 3 - 2/28/2023 12:44:15
+ AS V1.42 Beta [Bld 227] - Source File gm88_cnv.asm - Page 3 - 3/4/2023 17:19:0
 
 
   Code Pages:
@@ -2752,7 +2752,7 @@ STANDARD (0 changed characters)
 
 1 code page
 
-0.05 seconds assembly time
+0.03 seconds assembly time
 
    2579 lines source file
       3 passes
