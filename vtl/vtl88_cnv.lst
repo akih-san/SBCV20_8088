@@ -1,0 +1,1203 @@
+ AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 1 - 3/4/2023 17:22:42
+
+
+       1/       0 :                     	page 0
+       2/       0 :                     	cpu 8086
+       3/       0 :                     
+       4/       0 : =0H                  DEBUG = 0
+       5/       0 :                     
+       6/       0 : =0H                  DT_SEG		equ	0h
+       7/       0 : =7FFFH               RAM_END		equ	7fffh
+       8/       0 : =700H                TB_STACK	equ	700h
+       9/       0 : =8000H               RND_BASE	equ	8000h
+      10/       0 : =8A00H               RND_END		equ	8a00h
+      11/       0 :                     
+      12/       0 : =>TRUE               	if DEBUG = 0
+      13/       0 : =0B500H              TB_OFF		equ	0B500h
+      14/       0 : =700H                TB_WORK		equ	TB_STACK
+      15/       0 : =>FALSE              	else
+      16/       0 :                     TB_OFF		equ	TB_STACK
+      17/       0 :                     TB_WORK		equ	2000h
+      18/       0 : [12]                 	endif
+      19/       0 :                     
+      20/       0 :                     	ASSUME	CS:CODE, DS:DATA, SS:DATA, ES:NOTHING
+      21/       0 :                     
+      22/       0 :                     	SEGMENT	CODE
+      23/       0 :                     
+      24/    B500 :                     	ORG	TB_OFF
+      25/    B500 :                     
+      26/    B500 : E9 A0 06            	jmp	CSTART
+      27/    B503 : E9 A0 06            	jmp	WSTART
+      28/    B506 :                     
+      29/    B506 :                     ;-------------------
+      30/    B506 :                     ;
+      31/    B506 :                     ; start up routine
+      32/    B506 :                     ;
+      33/    B506 :                     ;-------------------
+      34/    B506 :                     
+      35/    B506 :                     ; cold start
+      36/    B506 :                     start_tb:
+      37/    B506 : B8 00 00            	mov	ax, DT_SEG
+      38/    B509 : 8E D8               	MOV	DS,AX
+      39/    B50B : 8E D0               	MOV	SS,AX
+      40/    B50D : BC 00 07            	MOV	SP,TB_STACK
+      41/    B510 :                     
+      42/    B510 : 33 C0               	xor	ax, ax
+      43/    B512 : BF 00 07            	mov	di, TB_WORK
+      44/    B515 : B9 80 3C            	mov	cx, ((RAM_END+1) - TB_WORK)/2
+      45/    B518 :                     mem_clear:
+      46/    B518 : 89 05               	mov	[di], ax
+      47/    B51A : 47                  	inc	di
+      48/    B51B : 47                  	inc	di
+      49/    B51C : E2 FA               	loop	mem_clear
+      50/    B51E :                     
+      51/    B51E : B8 00 80            	mov	ax, RND_BASE
+      52/    B521 : A3 04 07            	mov	[s_val], ax	; set initial BASE value for SEED
+      53/    B524 : 33 C0               	xor	ax, ax		; al : st_flg = 0
+      54/    B526 : E9 B0 00            	jmp	_main
+      55/    B529 :                     
+      56/    B529 :                     ;
+      57/    B529 :                     ; update random seed
+      58/    B529 :                     ;
+      59/    B529 :                     update_seed:
+      60/    B529 : 50                  	push	ax
+      61/    B52A : 53                  	push	bx
+      62/    B52B : 8B 1E 04 07         	mov	bx, [s_val]
+      63/    B52F : 8B 07               	mov	ax, [bx]
+      64/    B531 : A3 02 07            	mov	[SEEDX], ax	; update SEED
+      65/    B534 : 43                  	inc	bx
+      66/    B535 : 81 FB 00 8A         	cmp	bx, RND_END
+      67/    B539 : 75 03               	jne	w1
+      68/    B53B : BB 00 80            	mov	bx, RND_BASE
+      69/    B53E :                     w1:
+      70/    B53E : 89 1E 04 07         	mov	[s_val], bx	; update base value
+      71/    B542 : 5B                  	pop	bx
+      72/    B543 : 58                  	pop	ax
+      73/    B544 : C3                  	ret
+      74/    B545 :                     ;
+      75/    B545 :                     ; warm start
+      76/    B545 :                     ;
+      77/    B545 :                     _warm_boot:
+      78/    B545 : B8 00 00            	mov	ax, DT_SEG
+      79/    B548 : 8E D8               	MOV	DS,AX
+      80/    B54A : 8E D0               	MOV	SS,AX
+      81/    B54C : BC 00 07            	MOV	SP,TB_STACK
+      82/    B54F : E8 D7 FF            	call	update_seed
+      83/    B552 : B0 01               	mov	al,1	; al : st_flg = 0
+      84/    B554 :                     
+      85/    B554 :                     	; warm boot!
+      86/    B554 :                     	
+      87/    B554 : 55                  	push	bp
+      88/    B555 : 8B EC               	mov	bp,sp
+      89/    B557 : 83 EC 0E            	sub	sp,14
+      90/    B55A : E9 9E 00            	jmp	w_boot
+      91/    B55D :                     
+      92/    B55D :                     ;-------------------------------------
+      93/    B55D :                     ;
+      94/    B55D :                     ; SBCV20(8088)
+      95/    B55D :                     ; Machine depend I/O interface
+      96/    B55D :                     ;
+      97/    B55D :                     ; function call to Universal Monitor
+      98/    B55D :                     ; ( INT 21H )
+      99/    B55D :                     ;
+     100/    B55D :                     ;------------------------------------
+     101/    B55D :                     _putchr: ; input al
+     102/    B55D :                     	
+     103/    B55D :                     	; put a charactor : AH = 2
+     104/    B55D :                     	; input : DL : charactor
+     105/    B55D : B4 02               	mov	ah, 2
+     106/    B55F : 8A D0               	mov	dl, al
+     107/    B561 : CD 21               	int	21h		; system call
+     108/    B563 : C3                  	ret
+     109/    B564 :                     
+     110/    B564 :                     _c_getch:
+     111/    B564 :                     	; get a charactor : AH = 7
+     112/    B564 :                     	; return AL : charactor
+     113/    B564 :                     
+     114/    B564 : B4 07               	mov	ah, 7
+     115/    B566 : CD 21               	int	21h
+     116/    B568 : B4 00               	mov	ah, 0
+     117/    B56A : E8 BC FF            	call	update_seed
+     118/    B56D : C3                  	ret
+     119/    B56E :                     
+     120/    B56E :                     _c_kbhit:
+     121/    B56E :                     	; check key status : AH = 0BH
+     122/    B56E :                     	; OUTPUT : AL : 0     ( key is not exist )
+     123/    B56E :                     	;             : 0FFH  ( key is exist )
+     124/    B56E :                     
+     125/    B56E : B4 0B               	mov	ah, 0bh
+     126/    B570 : CD 21               	int	21h
+     127/    B572 : B4 00               	mov	ah, 0
+     128/    B574 : C3                  	ret
+     129/    B575 :                     	
+     130/    B575 :                     
+     131/    B575 :                     _getchr:
+     132/    B575 : E8 EC FF            	call	_c_getch
+     133/    B578 : E8 E2 FF            	call	_putchr		; al : char
+     134/    B57B : C3                  	ret
+     135/    B57C :                     
+     136/    B57C :                     _mach_fin:
+     137/    B57C : B4 00               	mov	ah, 0
+     138/    B57E : CD 21               	int	21h		; goto monitor
+     139/    B580 :                     
+     140/    B580 :                     _srand:
+     141/    B580 : 55                  	push	bp	;Entry sequence
+     142/    B581 : 8B EC               	mov	bp,sp
+     143/    B583 :                     
+     144/    B583 : 8B 46 04            	mov	ax,[bp+4]	; Load Arg1 into AX
+     145/    B586 : A3 00 07            	mov	[SEED], ax
+     146/    B589 : A3 02 07            	mov	[SEEDX], ax
+     147/    B58C :                     	
+     148/    B58C : 5D                  	pop	bp
+     149/    B58D : C3                  	ret
+     150/    B58E :                     
+     151/    B58E :                     _rand:
+     152/    B58E : 51                  	push	cx
+     153/    B58F : 52                  	push	dx
+     154/    B590 :                     
+     155/    B590 : A1 02 07            	mov	ax, [SEEDX]
+     156/    B593 : 0B C0               	or	ax, ax
+     157/    B595 : 75 03               	jnz	RND3
+     158/    B597 : B8 01 00            	mov	ax, 1
+     159/    B59A :                     RND3:
+     160/    B59A : 8B D0               	mov	dx, ax
+     161/    B59C : B1 05               	mov	cl, 5
+     162/    B59E : D3 E2               	shl	dx, cl
+     163/    B5A0 : 33 C2               	xor	ax, dx
+     164/    B5A2 : 8B D0               	mov	dx, ax
+     165/    B5A4 : B1 03               	mov	cl, 3
+     166/    B5A6 : D3 EA               	shr	dx, cl
+     167/    B5A8 : 33 C2               	xor	ax, dx
+     168/    B5AA : 50                  	push	ax
+     169/    B5AB :                     
+     170/    B5AB : A1 00 07            	mov	ax, [SEED]
+     171/    B5AE : 0B C0               	or	ax, ax
+     172/    B5B0 : 75 03               	jnz	RND4
+     173/    B5B2 : B8 01 00            	mov	ax, 1
+     174/    B5B5 :                     RND4:
+     175/    B5B5 : A3 02 07            	mov	[SEEDX], ax
+     176/    B5B8 : 8B D0               	mov	dx, ax
+     177/    B5BA : D1 EA               	shr	dx, 1
+     178/    B5BC : 33 C2               	xor	ax, dx
+     179/    B5BE : 5A                  	pop	dx
+     180/    B5BF : 33 C2               	xor	ax, dx
+     181/    B5C1 : A3 00 07            	mov	[SEED], ax	; 0 - FFFFH : -32768 ~ 32767
+     182/    B5C4 :                     
+     183/    B5C4 : 5A                  	pop dx
+     184/    B5C5 : 59                  	pop cx
+     185/    B5C6 : C3                  	ret
+     186/    B5C7 :                     
+     187/    B5C7 :                     _breakCheck:
+     188/    B5C7 :                     
+     189/    B5C7 : E8 A4 FF            	call	_c_kbhit
+     190/    B5CA : 0A C0               	or	al, al
+     191/    B5CC : 74 0A               	je	br2
+     192/    B5CE :                     
+     193/    B5CE : E8 93 FF            	call	_c_getch
+     194/    B5D1 :                     
+     195/    B5D1 : 3C 03               	cmp	al, 3
+     196/    B5D3 : 75 03               	jne	br2
+     197/    B5D5 : E9 6D FF            	jmp	_warm_boot
+     198/    B5D8 :                     
+     199/    B5D8 :                     br2:
+     200/    B5D8 : C3                  	ret	
+     201/    B5D9 :                     
+     202/    B5D9 :                     
+     203/    B5D9 :                     
+     204/    B5D9 :                     ;---------------------------
+     205/    B5D9 :                     ;  Very Tiny Language
+     206/    B5D9 :                     ;
+     207/    B5D9 :                     ;  T. Nakagawa
+     208/    B5D9 :                     ;
+     209/    B5D9 :                     ;  2004/05/23
+     210/    B5D9 :                     ;  2004/06/26
+     211/    B5D9 :                     ;
+     212/    B5D9 :                     ;---------------------------
+     213/    B5D9 :                     _main:
+     214/    B5D9 : 55                  	push	bp
+     215/    B5DA : 8B EC               	mov	bp,sp
+     216/    B5DC : 83 EC 0E            	sub	sp,14
+     217/    B5DF :                     
+     218/    B5DF :                     	; init * and &
+     219/    B5DF : C7 06 5E 07 F0 5F   	mov	word ptr _Lct+88, 5FF0h	; *=$5FF0
+     220/    B5E5 : C7 06 56 07 08 01   	mov	word ptr _Lct+80, 264	; &=264
+     221/    B5EB :                     
+     222/    B5EB : B8 B2 05            	mov	ax,1458
+     223/    B5EE : 50                  	push	ax
+     224/    B5EF : E8 8E FF            	call	_srand
+     225/    B5F2 : 59                  	pop	cx
+     226/    B5F3 :                     
+     227/    B5F3 : B8 A9 BB            	mov	ax, opmsg
+     228/    B5F6 : 50                  	push	ax
+     229/    B5F7 : E8 8C 05            	call	putstr
+     230/    B5FA : 59                  	pop	cx
+     231/    B5FB :                     
+     232/    B5FB :                     w_boot:
+     233/    B5FB :                     	; for (; ; ) {
+     234/    B5FB : B8 C4 BB            	mov	ax, okm
+     235/    B5FE : 50                  	push	ax
+     236/    B5FF : E8 84 05            	call	putstr
+     237/    B602 : 59                  	pop	cx
+     238/    B603 :                     nmsg_:
+     239/    B603 : B8 8A 00            	mov	ax, 138			; ax = Lbf + 2
+     240/    B606 : 89 46 FC            	mov	[bp-4], ax		; ptr : [bp-4]
+     241/    B609 : 50                  	push	ax			; push ptr
+     242/    B60A : E8 E9 01            	call	getln
+     243/    B60D : 59                  	pop	cx
+     244/    B60E : 8D 46 FE            	lea	ax,word ptr [bp-2]	; n : [bp-2]
+     245/    B611 : 50                  	push	ax			; push &n
+     246/    B612 : 8D 46 FC            	lea	ax,word ptr [bp-4]
+     247/    B615 : 50                  	push	ax			; push &ptr
+     248/    B616 : E8 3D 02            	call	getnm
+     249/    B619 : 59                  	pop	cx
+     250/    B61A : 59                  	pop	cx
+     251/    B61B : 0B C0               	or	ax,ax
+     252/    B61D : 75 6E               	jnz	L_5			; } else {
+     253/    B61F :                     
+     254/    B61F :                     	; if (!getnm(&ptr, &n)) {
+     255/    B61F : BB 88 00            	mov	bx, 136
+     256/    B622 : 89 5E FA            	mov	[bp-6], bx		; line : [bp-6] = Lbf (88h)
+     257/    B625 : C7 87 06 07 00 00   	mov	word ptr _Lct[bx],0	; _*(u_short *)(Lct+line)=0
+     258/    B62B : C7 06 50 07 00 00   	mov	word ptr _Lct+74,0	; Pcc(#) : [_Lct+74] = 0
+     259/    B631 :                     L_8:
+     260/    B631 :                     	; for (; ; ) {
+     261/    B631 : E8 93 FF            	call	_breakCheck
+     262/    B634 : FF 76 FC            	push	word ptr [bp-4]		; push ptr
+     263/    B637 : E8 79 02            	call	ordr
+     264/    B63A : 59                  	pop	cx
+     265/    B63B :                     
+     266/    B63B : 8B 5E FA            	mov	bx, [bp-6]		; get line
+     267/    B63E : A1 50 07            	mov	ax, [_Lct+74]		; get Pcc
+     268/    B641 : 0B C0               	or	ax, ax			; Pcc = 0?
+     269/    B643 : 74 06               	je	L_10
+     270/    B645 : 3B 87 06 07         	cmp	ax, [bx+_Lct]		; Pcc = line?
+     271/    B649 : 75 16               	jne	L_9
+     272/    B64B :                     L_10:
+     273/    B64B :                     	; if (line == Lbf) {
+     274/    B64B : 81 FB 88 00         	cmp	bx ,136			; line = Lbf (136) ?
+     275/    B64F : 74 AA               	je	w_boot			; break; direct mode
+     276/    B651 :                     
+     277/    B651 : 53                  	push	bx			; push line
+     278/    B652 : E8 88 01            	call	nxtln
+     279/    B655 : 59                  	pop	cx
+     280/    B656 : 89 46 FA            	mov	[bp-6], ax		; update line
+     281/    B659 :                     
+     282/    B659 : 3B 06 56 07         	cmp	ax, [_Lct+80]		; line = Bnd ('&')?
+     283/    B65D : 74 9C               	je	w_boot			; break; detect last line
+     284/    B65F : EB 17               	jmp	L_13
+     285/    B661 :                     
+     286/    B661 :                     L_9:	; } else {
+     287/    B661 : 8B 5E FA            	mov	bx, [bp-6]		; get line
+     288/    B664 : 8B 87 06 07         	mov	ax, [bx+_Lct]		; get branch No.
+     289/    B668 : 40                  	inc	ax
+     290/    B669 : A3 4C 07            	mov	[_Lct+70] ,ax		; Svp('!') = line + 1
+     291/    B66C :                     
+     292/    B66C :                     	; if (fndln(&line)) break;
+     293/    B66C : 8D 46 FA            	lea	ax, [bp-6]
+     294/    B66F : 50                  	push	ax			; push &line
+     295/    B670 : E8 37 01            	call	fndln
+     296/    B673 : 59                  	pop	cx
+     297/    B674 : 0B C0               	or	ax,ax
+     298/    B676 : 75 83               	jnz	w_boot			; break;
+     299/    B678 :                     
+     300/    B678 :                     L_13:
+     301/    B678 : 8B 5E FA            	mov	bx, [bp-6]		; get line
+     302/    B67B : 8B 87 06 07         	mov	ax, [bx+_Lct]		; get line No.
+     303/    B67F : A3 50 07            	mov	[_Lct+74], ax		; Pcc = ax
+     304/    B682 :                     
+     305/    B682 : 8B 46 FA            	mov	ax, [bp-6]		; ax : get line
+     306/    B685 : 05 03 00            	add	ax, 3			; line + 3
+     307/    B688 : 89 46 FC            	mov	word ptr [bp-4],ax	; save ax to ptr
+     308/    B68B : EB A4               	jmp	L_8
+     309/    B68D :                     
+     310/    B68D :                     L_5:
+     311/    B68D :                     	; if (n == 0) {
+     312/    B68D : 83 7E FE 00         	cmp	word ptr [bp-2],0	; n=0?
+     313/    B691 : 75 33               	jne	L_16
+     314/    B693 :                     
+     315/    B693 :                     	; for (ptr = Obj; ptr != READW(Bnd); ) {
+     316/    B693 : C7 46 FC 08 01      	mov	word ptr [bp-4],264	; ptr = Obj(264)
+     317/    B698 : EB 20               	jmp	L_20
+     318/    B69A :                     L_19:
+     319/    B69A : E8 2A FF            	call	_breakCheck
+     320/    B69D : 8B 5E FC            	mov	bx, [bp-4]		; get ptr
+     321/    B6A0 : FF B7 06 07         	push	[bx+_Lct]		; put *ptr
+     322/    B6A4 : E8 8D 04            	call	putnm
+     323/    B6A7 : 59                  	pop	cx
+     324/    B6A8 :                     
+     325/    B6A8 : 8D 5E FC            	lea	bx, [bp-4]		; get ptr
+     326/    B6AB : 83 07 02            	add	word ptr [bx], 2	; ptr+=2
+     327/    B6AE : B0 00               	mov	al,0
+     328/    B6B0 : 50                  	push	ax			; push 0
+     329/    B6B1 : 53                  	push	bx			; push ptr
+     330/    B6B2 : E8 56 04            	call	putl
+     331/    B6B5 : 59                  	pop	cx
+     332/    B6B6 : 59                  	pop	cx
+     333/    B6B7 : E8 6F 04            	call	crlf
+     334/    B6BA :                     L_20:
+     335/    B6BA : 8B 46 FC            	mov	ax, [bp-4]		; get ptr
+     336/    B6BD : 3B 06 56 07         	cmp	ax, [_Lct+80]		; ptr = Bnd('&')
+     337/    B6C1 : 75 D7               	jne	L_19
+     338/    B6C3 :                     
+     339/    B6C3 : E9 35 FF            	jmp	w_boot
+     340/    B6C6 :                     
+     341/    B6C6 :                     L_16:	; /* DELETE */
+     342/    B6C6 : 8B 46 FE            	mov	ax, [bp-2]		; get n
+     343/    B6C9 : A3 50 07            	mov	[_Lct+74], ax		; *Pcc = n
+     344/    B6CC :                     
+     345/    B6CC :                     	; if (!fndln(&cur) 
+     346/    B6CC : 8D 46 F2            	lea	ax, [bp-14]		; cur : [bp-14]
+     347/    B6CF : 50                  	push	ax			; push &cur
+     348/    B6D0 : E8 D7 00            	call	fndln
+     349/    B6D3 : 59                  	pop	cx
+     350/    B6D4 : 0B C0               	or	ax,ax			; fndln(&cur) = 0?
+     351/    B6D6 : 75 41               	jne	L_22
+     352/    B6D8 :                     
+     353/    B6D8 :                     	; && READW(cur) == n) {
+     354/    B6D8 : 8B 5E F2            	mov	bx, [bp-14]
+     355/    B6DB : 8B 87 06 07         	mov	ax, [bx+_Lct]		; get *cur
+     356/    B6DF : 3B 46 FE            	cmp	ax, [bp-2]		; *cur = n?
+     357/    B6E2 : 75 35               	jne	L_22
+     358/    B6E4 :                     
+     359/    B6E4 :                     	; src = nxtln(cur);
+     360/    B6E4 : FF 76 F2            	push	word ptr [bp-14]	; push cur
+     361/    B6E7 : E8 F3 00            	call	nxtln
+     362/    B6EA : 59                  	pop	cx
+     363/    B6EB : 89 46 F4            	mov	[bp-12], ax		; src : [bp-12] = ax
+     364/    B6EE :                     
+     365/    B6EE :                     ;for (dst = cur; src != *Bnd; *dst++, *src++) ;
+     366/    B6EE :                     
+     367/    B6EE : 8B 46 F2            	mov	ax, [bp-14]
+     368/    B6F1 : 89 46 F6            	mov	[bp-10], ax		; dst = cur
+     369/    B6F4 : EB 14               	jmp	L_26
+     370/    B6F6 :                     
+     371/    B6F6 :                     L_25:
+     372/    B6F6 : 8B 5E F4            	mov	bx, [bp-12]		; bx = src
+     373/    B6F9 : 8A 87 06 07         	mov	al, [bx+_Lct]		; al = *src
+     374/    B6FD : 8B 5E F6            	mov	bx, [bp-10]		; bx = dst
+     375/    B700 : 88 87 06 07         	mov	[bx+_Lct], al		; *dst = *src
+     376/    B704 : FF 46 F4            	inc	word ptr [bp-12]	; src++
+     377/    B707 : FF 46 F6            	inc	word ptr [bp-10]	; dst++
+     378/    B70A :                     
+     379/    B70A :                     L_26:
+     380/    B70A : 8B 46 F4            	mov	ax, [bp-12]
+     381/    B70D : 3B 06 56 07         	cmp	ax, [_Lct+80]		; src = & ?
+     382/    B711 : 75 E3               	jne	L_25			; loop next
+     383/    B713 :                     
+     384/    B713 :                     	; WRITEW(Bnd, dst);
+     385/    B713 : 8B 46 F6            	mov	ax, [bp-10]		; get dst
+     386/    B716 : A3 56 07            	mov	[_Lct+80] ,ax		; & = dst
+     387/    B719 :                     
+     388/    B719 :                     L_22:	; /* INSRT */
+     389/    B719 :                     	; if (READB(ptr) == '\0') continue;
+     390/    B719 : 8B 5E FC            	mov	bx,word ptr [bp-4]
+     391/    B71C : 80 BF 06 07 00      	cmp	byte ptr _Lct[bx],0	; *ptr = 0?
+     392/    B721 : 75 03               	jne	L_27
+     393/    B723 :                     L_15:
+     394/    B723 : E9 DD FE            	jmp	nmsg_
+     395/    B726 :                     
+     396/    B726 :                     L_27:
+     397/    B726 :                     ; for (m = 3, tmp = ptr; READB(tmp) != '\0'; m++, tmp++) 
+     398/    B726 :                     
+     399/    B726 : C7 46 FA 03 00      	mov	word ptr [bp-6],3	; m=3
+     400/    B72B : 8B 46 FC            	mov	ax, [bp-4]		; get ptr
+     401/    B72E : 89 46 F8            	mov	word ptr [bp-8],ax	; tmp : [bp-8] = ptr
+     402/    B731 : EB 06               	jmp	L_31
+     403/    B733 :                     
+     404/    B733 :                     L_30:
+     405/    B733 : FF 46 FA            	inc	word ptr [bp-6]		; m++
+     406/    B736 : FF 46 F8            	inc	word ptr [bp-8]		; tmp++
+     407/    B739 :                     
+     408/    B739 :                     L_31:
+     409/    B739 : 8B 5E F8            	mov	bx, [bp-8]
+     410/    B73C : 80 BF 06 07 00      	cmp	byte ptr [bx+_Lct],0	; *tmp= 0?
+     411/    B741 : 75 F0               	jne	L_30			; loop next
+     412/    B743 :                     
+     413/    B743 :                     	; if (READW(Bnd) + m < READW(Lmt)) {
+     414/    B743 : A1 56 07            	mov	ax, [_Lct+80]		; get &
+     415/    B746 : 03 46 FA            	add	ax, [bp-6]		; & + m
+     416/    B749 : 3B 06 5E 07         	cmp	ax, [_Lct+88]		; & < *?
+     417/    B74D : 73 D4               	jae	L_15			; memory full
+     418/    B74F :                     
+     419/    B74F : A1 56 07            	mov	ax, [_Lct+80]		; get &
+     420/    B752 : 89 46 F4            	mov	[bp-12], ax		; src = &
+     421/    B755 :                     
+     422/    B755 : A1 56 07            	mov	ax, [_Lct+80]
+     423/    B758 : 03 46 FA            	add	ax, [bp-6]
+     424/    B75B : A3 56 07            	mov	[_Lct+80] ,ax		; & = &+m
+     425/    B75E :                     
+     426/    B75E :                     ; for (dst = READW(Bnd); src != cur; WRITEB(--dst, READB(--src))) ;
+     427/    B75E : 89 46 F6            	mov	[bp-10], ax		; dst = &
+     428/    B761 : EB 14               	jmp	L_36
+     429/    B763 :                     
+     430/    B763 :                     L_35:
+     431/    B763 : FF 4E F6            	dec	word ptr [bp-10]	; --dst
+     432/    B766 : FF 4E F4            	dec	word ptr [bp-12]	; --src
+     433/    B769 : 8B 5E F4            	mov	bx, [bp-12]
+     434/    B76C : 8A 87 06 07         	mov	al, [bx+_Lct]		; *src
+     435/    B770 : 8B 5E F6            	mov	bx, [bp-10]
+     436/    B773 : 88 87 06 07         	mov	[bx+_Lct], al		; *dst = *src
+     437/    B777 :                     
+     438/    B777 :                     L_36:
+     439/    B777 : 8B 46 F4            	mov	ax, [bp-12]
+     440/    B77A : 3B 46 F2            	cmp	ax, [bp-14]		; src != cur?
+     441/    B77D : 75 E4               	jne	L_35			; next loop
+     442/    B77F :                     
+     443/    B77F :                     	; WRITEW(src, n);
+     444/    B77F : 8B 46 FE            	mov	ax, [bp-2]
+     445/    B782 : 8B 5E F4            	mov	bx, [bp-12]
+     446/    B785 : 89 87 06 07         	mov	[bx+_Lct],ax		; *src = n
+     447/    B789 :                     
+     448/    B789 :                     	; src += 2;
+     449/    B789 : 83 C3 02            	add	bx, 2
+     450/    B78C : 89 5E F4            	mov	[bp-12], bx		; src +=2
+     451/    B78F :                     
+     452/    B78F :                     L_39: ; while (WRITEB(src++, READB(ptr++)) != '\0') ;
+     453/    B78F : 8B 5E FC            	mov	bx, [bp-4]
+     454/    B792 : FF 46 FC            	inc	word ptr [bp-4]		; ptr++
+     455/    B795 : 8A 87 06 07         	mov	al, [bx+_Lct]		; *ptr
+     456/    B799 :                     
+     457/    B799 : 8B 5E F4            	mov	bx, [bp-12]		; bx = src
+     458/    B79C : FF 46 F4            	inc	word ptr [bp-12]
+     459/    B79F : 88 87 06 07         	mov	[bx+_Lct], al		; *src = *ptr
+     460/    B7A3 :                     
+     461/    B7A3 : 0A C0               	or	al,al			; al = 0?
+     462/    B7A5 : 75 E8               	jne	L_39			; loop while
+     463/    B7A7 :                     
+     464/    B7A7 : E9 59 FE            	jmp	nmsg_
+     465/    B7AA :                     
+     466/    B7AA :                     fndln:
+     467/    B7AA : 55                  	push	bp
+     468/    B7AB : 8B EC               	mov	bp,sp
+     469/    B7AD : 56                  	push	si
+     470/    B7AE : 8B 76 04            	mov	si, [bp+4]
+     471/    B7B1 :                     
+     472/    B7B1 : C7 04 08 01         	mov	word ptr [si], 264
+     473/    B7B5 : EB 18               	jmp	L_45
+     474/    B7B7 :                     
+     475/    B7B7 :                     L_44:
+     476/    B7B7 : 8B 1C               	mov	bx, [si]
+     477/    B7B9 : 8B 87 06 07         	mov	ax, [bx+_Lct]
+     478/    B7BD : 3B 06 50 07         	cmp	ax, [_Lct+74]
+     479/    B7C1 : 72 04               	jb	L_46
+     480/    B7C3 : 33 C0               	xor	ax,ax
+     481/    B7C5 : EB 13               	jmp	L_41
+     482/    B7C7 :                     L_46:
+     483/    B7C7 : FF 34               	push	[si]
+     484/    B7C9 : E8 11 00            	call	nxtln
+     485/    B7CC : 59                  	pop	cx
+     486/    B7CD : 89 04               	mov	[si], ax
+     487/    B7CF :                     L_45:
+     488/    B7CF : 8B 04               	mov	ax, [si]
+     489/    B7D1 : 3B 06 56 07         	cmp	ax, [_Lct+80]
+     490/    B7D5 : 75 E0               	jne	L_44
+     491/    B7D7 : B8 01 00            	mov	ax, 1
+     492/    B7DA :                     
+     493/    B7DA :                     L_41:
+     494/    B7DA : 5E                  	pop	si
+     495/    B7DB : 5D                  	pop	bp
+     496/    B7DC : C3                  	ret	
+     497/    B7DD :                     
+     498/    B7DD :                     nxtln:
+     499/    B7DD : 55                  	push	bp
+     500/    B7DE : 8B EC               	mov	bp,sp
+     501/    B7E0 : 83 46 04 02         	add	word ptr [bp+4], 2
+     502/    B7E4 :                     L_50:
+     503/    B7E4 : 8B 5E 04            	mov	bx, [bp+4]
+     504/    B7E7 : FF 46 04            	inc	word ptr [bp+4]
+     505/    B7EA : 80 BF 06 07 00      	cmp	byte ptr [bx+_Lct], 0
+     506/    B7EF : 75 F3               	jne	L_50
+     507/    B7F1 : 8B 46 04            	mov	ax, [bp+4]
+     508/    B7F4 : 5D                  	pop	bp
+     509/    B7F5 : C3                  	ret	
+     510/    B7F6 :                     
+     511/    B7F6 :                     getln:
+     512/    B7F6 : 55                  	push	bp
+     513/    B7F7 : 8B EC               	mov	bp,sp
+     514/    B7F9 : 83 EC 02            	sub	sp,2
+     515/    B7FC : 56                  	push	si
+     516/    B7FD : 33 F6               	xor	si,si
+     517/    B7FF :                     
+     518/    B7FF :                     L_55:	; for (p = 0; ; ) {
+     519/    B7FF : E8 73 FD            	call	_getchr
+     520/    B802 : 88 46 FF            	mov	[bp-1], al
+     521/    B805 : 3C 08               	cmp	al, 8		; BS
+     522/    B807 : 75 07               	jne	L_56
+     523/    B809 :                     
+     524/    B809 : 0B F6               	or	si,si
+     525/    B80B : 7E F2               	jle	L_55
+     526/    B80D :                     
+     527/    B80D : 4E                  	dec	si
+     528/    B80E : EB EF               	jmp	L_55
+     529/    B810 :                     
+     530/    B810 :                     L_56:
+     531/    B810 : 80 7E FF 0D         	cmp	byte ptr [bp-1],13	; CR
+     532/    B814 : 75 11               	jne	L_59
+     533/    B816 : 8B 5E 04            	mov	bx,word ptr [bp+4]
+     534/    B819 : 03 DE               	add	bx,si
+     535/    B81B : C6 87 06 07 00      	mov	byte ptr _Lct[bx],0
+     536/    B820 : B0 0A               	mov	al,10
+     537/    B822 : E8 38 FD            	call	_putchr
+     538/    B825 : EB 2A               	jmp	L_52
+     539/    B827 :                     
+     540/    B827 :                     L_59:
+     541/    B827 : 80 7E FF 15         	cmp	byte ptr [bp-1], 21	; 0x15
+     542/    B82B : 74 08               	je	L_62
+     543/    B82D : 8B C6               	mov	ax,si
+     544/    B82F : 40                  	inc	ax
+     545/    B830 : 3D 4A 00            	cmp	ax,74
+     546/    B833 : 75 07               	jne	L_61
+     547/    B835 :                     
+     548/    B835 :                     L_62:
+     549/    B835 : E8 F1 02            	call	crlf
+     550/    B838 : 33 F6               	xor	si,si
+     551/    B83A : EB C3               	jmp	L_55
+     552/    B83C :                     
+     553/    B83C :                     L_61:
+     554/    B83C : 80 7E FF 1F         	cmp	byte ptr [bp-1], 31	; 0x1f
+     555/    B840 : 76 BD               	jbe	L_55
+     556/    B842 :                     
+     557/    B842 : 8A 46 FF            	mov	al, [bp-1]
+     558/    B845 : 8B DE               	mov	bx, si
+     559/    B847 : 03 5E 04            	add	bx, [bp+4]
+     560/    B84A : 88 87 06 07         	mov	[bx+_Lct], al
+     561/    B84E : 46                  	inc	si
+     562/    B84F : EB AE               	jmp	L_55
+     563/    B851 :                     
+     564/    B851 :                     L_52:
+     565/    B851 : 5E                  	pop	si
+     566/    B852 : 8B E5               	mov	sp,bp
+     567/    B854 : 5D                  	pop	bp
+     568/    B855 : C3                  	ret	
+     569/    B856 :                     
+     570/    B856 :                     getnm:
+     571/    B856 : 55                  	push	bp
+     572/    B857 : 8B EC               	mov	bp,sp
+     573/    B859 : 56                  	push	si
+     574/    B85A : 57                  	push	di
+     575/    B85B : 8B 76 06            	mov	si, [bp+6]
+     576/    B85E : 8B 7E 04            	mov	di, [bp+4]
+     577/    B861 : FF 35               	push	[di]
+     578/    B863 : E8 32 00            	call	num
+     579/    B866 : 59                  	pop	cx
+     580/    B867 : 0B C0               	or	ax, ax
+     581/    B869 : 74 29               	je	L_66
+     582/    B86B :                     
+     583/    B86B : C7 04 00 00         	mov	word ptr [si], 0
+     584/    B86F :                     L_70:
+     585/    B86F : 8B 04               	mov	ax, [si]
+     586/    B871 : BA 0A 00            	mov	dx, 10
+     587/    B874 : F7 E2               	mul	dx
+     588/    B876 : 89 04               	mov	[si], ax
+     589/    B878 : 8B 1D               	mov	bx, [di]
+     590/    B87A : FF 05               	inc	word ptr [di]
+     591/    B87C :                     
+     592/    B87C : 8A 87 06 07         	mov	al, [bx+_Lct]
+     593/    B880 : B4 00               	mov	ah,0
+     594/    B882 : 2D 30 00            	sub	ax, 48			; '0'
+     595/    B885 : 01 04               	add	[si], ax
+     596/    B887 : FF 35               	push	[di]
+     597/    B889 : E8 0C 00            	call	num
+     598/    B88C : 59                  	pop	cx
+     599/    B88D : 0B C0               	or	ax, ax
+     600/    B88F : 75 DE               	jne	L_70
+     601/    B891 :                     
+     602/    B891 : B8 01 00            	mov	ax,1
+     603/    B894 :                     L_66:
+     604/    B894 : 5F                  	pop	di
+     605/    B895 : 5E                  	pop	si
+     606/    B896 : 5D                  	pop	bp
+     607/    B897 : C3                  	ret	
+     608/    B898 :                     
+     609/    B898 :                     num:
+     610/    B898 : 55                  	push	bp
+     611/    B899 : 8B EC               	mov	bp,sp
+     612/    B89B : 8B 5E 04            	mov	bx, [bp+4]
+     613/    B89E : 8A 87 06 07         	mov	al, [bx+_Lct]
+     614/    B8A2 : 3C 30               	cmp	al, '0'
+     615/    B8A4 : 72 09               	jb	L_73
+     616/    B8A6 :                     
+     617/    B8A6 : 3C 39               	cmp	al, '9'
+     618/    B8A8 : 77 05               	ja	L_73
+     619/    B8AA :                     
+     620/    B8AA : B8 01 00            	mov	ax,1
+     621/    B8AD : 5D                  	pop	bp
+     622/    B8AE : C3                  	ret	
+     623/    B8AF :                     
+     624/    B8AF :                     L_73:
+     625/    B8AF : 33 C0               	xor	ax,ax
+     626/    B8B1 : 5D                  	pop	bp
+     627/    B8B2 : C3                  	ret	
+     628/    B8B3 :                     
+     629/    B8B3 :                     ordr:
+     630/    B8B3 : 55                  	push	bp
+     631/    B8B4 : 8B EC               	mov	bp,sp
+     632/    B8B6 : 83 EC 08            	sub	sp,8
+     633/    B8B9 : 8D 46 FE            	lea	ax, [bp-2]
+     634/    B8BC : 50                  	push	ax
+     635/    B8BD : 8D 46 FD            	lea	ax, [bp-3]
+     636/    B8C0 : 50                  	push	ax
+     637/    B8C1 : 8D 46 04            	lea	ax, [bp+4]
+     638/    B8C4 : 50                  	push	ax
+     639/    B8C5 : E8 EC 01            	call	getvr
+     640/    B8C8 : 83 C4 06            	add	sp, 6
+     641/    B8CB : FF 46 04            	inc	word ptr [bp+4]
+     642/    B8CE :                     
+     643/    B8CE : 8B 5E 04            	mov	bx, [bp+4]
+     644/    B8D1 : 8A 87 06 07         	mov	al, [bx+_Lct]
+     645/    B8D5 : 3C 22               	cmp	al, 34
+     646/    B8D7 : 75 1C               	jne	L_75
+     647/    B8D9 :                     
+     648/    B8D9 : FF 46 04            	inc	word ptr [bp+4]
+     649/    B8DC : 50                  	push	ax			; al : 34
+     650/    B8DD : 8D 46 04            	lea	ax, [bp+4]
+     651/    B8E0 : 50                  	push	ax
+     652/    B8E1 : E8 27 02            	call	putl
+     653/    B8E4 : 59                  	pop	cx
+     654/    B8E5 : 59                  	pop	cx
+     655/    B8E6 :                     
+     656/    B8E6 : 8B 5E 04            	mov	bx, [bp+4]
+     657/    B8E9 : 80 BF 06 07 3B      	cmp	byte ptr [bx+_Lct], 59
+     658/    B8EE : 74 4A               	je	L_77
+     659/    B8F0 : E8 36 02            	call	crlf
+     660/    B8F3 : EB 45               	jmp	L_77
+     661/    B8F5 :                     
+     662/    B8F5 :                     L_75:
+     663/    B8F5 : 8D 46 FA            	lea	ax, [bp-6]
+     664/    B8F8 : 50                  	push	ax
+     665/    B8F9 : 8D 46 04            	lea	ax, [bp+4]
+     666/    B8FC : 50                  	push	ax
+     667/    B8FD : E8 3E 00            	call	expr
+     668/    B900 : 59                  	pop	cx
+     669/    B901 : 59                  	pop	cx
+     670/    B902 :                     
+     671/    B902 : 80 7E FD 24         	cmp	byte ptr [bp-3],36
+     672/    B906 : 75 08               	jne	L_78
+     673/    B908 :                     
+     674/    B908 : 8A 46 FA            	mov	al, [bp-6]
+     675/    B90B : E8 4F FC            	call	_putchr
+     676/    B90E : EB 2A               	jmp	L_77
+     677/    B910 :                     
+     678/    B910 :                     L_78:
+     679/    B910 : 80 6E FD 3F         	sub	byte ptr [bp-3],63
+     680/    B914 : 8A 46 FD            	mov	al, [bp-3]
+     681/    B917 : 0A C0               	or	al, al
+     682/    B919 : 75 09               	jne	L_80
+     683/    B91B :                     
+     684/    B91B : FF 76 FA            	push	word ptr [bp-6]
+     685/    B91E : E8 13 02            	call	putnm
+     686/    B921 : 59                  	pop	cx
+     687/    B922 : EB 16               	jmp	L_77
+     688/    B924 :                     
+     689/    B924 :                     L_80:
+     690/    B924 : 8B 46 FA            	mov	ax, [bp-6]
+     691/    B927 : 8B 5E FE            	mov	bx, [bp-2]
+     692/    B92A : 89 87 06 07         	mov	[bx+_Lct], ax
+     693/    B92E : E8 5D FC            	call	_rand
+     694/    B931 : 89 46 F8            	mov	[bp-8], ax
+     695/    B934 : 8B 46 F8            	mov	ax, [bp-8]
+     696/    B937 : A3 58 07            	mov	[_Lct+82] ,ax
+     697/    B93A :                     
+     698/    B93A :                     L_77:
+     699/    B93A : 8B E5               	mov	sp,bp
+     700/    B93C : 5D                  	pop	bp
+     701/    B93D : C3                  	ret	
+     702/    B93E :                     
+     703/    B93E :                     expr:
+     704/    B93E : 55                  	push	bp
+     705/    B93F : 8B EC               	mov	bp,sp
+     706/    B941 : 83 EC 02            	sub	sp,2
+     707/    B944 : 56                  	push	si
+     708/    B945 : 8B 76 04            	mov	si,word ptr [bp+4]
+     709/    B948 : FF 76 06            	push	word ptr [bp+6]
+     710/    B94B : 56                  	push	si
+     711/    B94C : E8 27 00            	call	factr
+     712/    B94F : 59                  	pop	cx
+     713/    B950 : 59                  	pop	cx
+     714/    B951 : EB 09               	jmp	L_83
+     715/    B953 :                     
+     716/    B953 :                     L_85:
+     717/    B953 : FF 76 06            	push	word ptr [bp+6]
+     718/    B956 : 56                  	push	si
+     719/    B957 : E8 AA 00            	call	term
+     720/    B95A : 59                  	pop	cx
+     721/    B95B : 59                  	pop	cx
+     722/    B95C :                     L_83:
+     723/    B95C : 8B 1C               	mov	bx,word ptr [si]
+     724/    B95E : 8A 87 06 07         	mov	al,byte ptr _Lct[bx]
+     725/    B962 : 88 46 FF            	mov	byte ptr [bp-1],al
+     726/    B965 : 0A C0               	or	al,al
+     727/    B967 : 74 06               	je	L_86
+     728/    B969 : 80 7E FF 29         	cmp	byte ptr [bp-1],41
+     729/    B96D : 75 E4               	jne	L_85
+     730/    B96F :                     
+     731/    B96F :                     L_86:
+     732/    B96F : FF 04               	inc	word ptr [si]
+     733/    B971 : 5E                  	pop	si
+     734/    B972 : 8B E5               	mov	sp,bp
+     735/    B974 : 5D                  	pop	bp
+     736/    B975 : C3                  	ret	
+     737/    B976 :                     
+     738/    B976 :                     factr:
+     739/    B976 : 55                  	push	bp
+     740/    B977 : 8B EC               	mov	bp,sp
+     741/    B979 : 83 EC 04            	sub	sp,4
+     742/    B97C : 56                  	push	si
+     743/    B97D : 57                  	push	di
+     744/    B97E : 8B 7E 06            	mov	di, [bp+6]
+     745/    B981 : 8B 76 04            	mov	si, [bp+4]
+     746/    B984 : 8B 1C               	mov	bx, [si]
+     747/    B986 : 8A 87 06 07         	mov	al, [bx+_Lct]
+     748/    B98A : 3C 00               	cmp	al, 0
+     749/    B98C : 75 04               	jne	L_88
+     750/    B98E :                     
+     751/    B98E : 88 05               	mov	[di], al	; [di] <- al
+     752/    B990 : EB 6C               	jmp	L_87
+     753/    B992 :                     
+     754/    B992 :                     L_88:
+     755/    B992 : 57                  	push	di
+     756/    B993 : 56                  	push	si
+     757/    B994 : E8 BF FE            	call	getnm
+     758/    B997 : 59                  	pop	cx
+     759/    B998 : 59                  	pop	cx
+     760/    B999 : 0B C0               	or	ax,ax
+     761/    B99B : 74 02               	je	L_89
+     762/    B99D : EB 5F               	jmp	L_87
+     763/    B99F :                     
+     764/    B99F :                     L_89:
+     765/    B99F : 8B 04               	mov	ax, [si]
+     766/    B9A1 : FF 04               	inc	word ptr [si]
+     767/    B9A3 : 8B D8               	mov	bx, ax
+     768/    B9A5 : 8A 87 06 07         	mov	al, [bx+_Lct]
+     769/    B9A9 :                     
+     770/    B9A9 : 88 46 FF            	mov	[bp-1], al
+     771/    B9AC : 3C 3F               	cmp	al ,63
+     772/    B9AE : 75 17               	jne	L_90
+     773/    B9B0 :                     
+     774/    B9B0 : B8 88 00            	mov	ax, 136
+     775/    B9B3 : 89 46 FC            	mov	[bp-4], ax
+     776/    B9B6 : 50                  	push	ax
+     777/    B9B7 : E8 3C FE            	call	getln
+     778/    B9BA : 59                  	pop	cx
+     779/    B9BB : 57                  	push	di
+     780/    B9BC : 8D 46 FC            	lea	ax, [bp-4]
+     781/    B9BF : 50                  	push	ax
+     782/    B9C0 : E8 7B FF            	call	expr
+     783/    B9C3 : 59                  	pop	cx
+     784/    B9C4 : 59                  	pop	cx
+     785/    B9C5 : EB 37               	jmp	L_87
+     786/    B9C7 :                     
+     787/    B9C7 :                     L_90:
+     788/    B9C7 : 8A 46 FF            	mov	al, [bp-1]
+     789/    B9CA : 3C 24               	cmp	al, 36
+     790/    B9CC : 75 09               	jne	L_92
+     791/    B9CE : E8 A4 FB            	call	_getchr
+     792/    B9D1 : B4 00               	mov	ah,0
+     793/    B9D3 : 89 05               	mov	[di], ax
+     794/    B9D5 : EB 27               	jmp	L_87
+     795/    B9D7 :                     
+     796/    B9D7 :                     L_92:
+     797/    B9D7 : 3C 28               	cmp	al ,40
+     798/    B9D9 : 75 09               	jne	L_94
+     799/    B9DB : 57                  	push	di
+     800/    B9DC : 56                  	push	si
+     801/    B9DD : E8 5E FF            	call	expr
+     802/    B9E0 : 59                  	pop	cx
+     803/    B9E1 : 59                  	pop	cx
+     804/    B9E2 : EB 1A               	jmp	L_87
+     805/    B9E4 :                     
+     806/    B9E4 :                     L_94:
+     807/    B9E4 : FF 0C               	dec	word ptr [si]
+     808/    B9E6 : 8D 46 FC            	lea	ax, [bp-4]
+     809/    B9E9 : 50                  	push	ax
+     810/    B9EA : 8D 46 FF            	lea	ax, [bp-1]
+     811/    B9ED : 50                  	push	ax
+     812/    B9EE : 56                  	push	si
+     813/    B9EF : E8 C2 00            	call	getvr
+     814/    B9F2 : 83 C4 06            	add	sp,6
+     815/    B9F5 : 8B 5E FC            	mov	bx, [bp-4]
+     816/    B9F8 : 8B 87 06 07         	mov	ax,[bx+_Lct]
+     817/    B9FC : 89 05               	mov	[di], ax
+     818/    B9FE :                     
+     819/    B9FE :                     L_87:
+     820/    B9FE : 5F                  	pop	di
+     821/    B9FF : 5E                  	pop	si
+     822/    BA00 : 8B E5               	mov	sp,bp
+     823/    BA02 : 5D                  	pop	bp
+     824/    BA03 : C3                  	ret	
+     825/    BA04 :                     
+     826/    BA04 :                     term:
+     827/    BA04 : 55                  	push	bp
+     828/    BA05 : 8B EC               	mov	bp,sp
+     829/    BA07 : 83 EC 04            	sub	sp,4
+     830/    BA0A : 56                  	push	si
+     831/    BA0B : 8B 76 06            	mov	si,word ptr [bp+6]
+     832/    BA0E : 8B 5E 04            	mov	bx,word ptr [bp+4]
+     833/    BA11 : 8B 07               	mov	ax,word ptr [bx]
+     834/    BA13 : FF 07               	inc	word ptr [bx]
+     835/    BA15 : 8B D8               	mov	bx,ax
+     836/    BA17 : 8A 87 06 07         	mov	al,byte ptr _Lct[bx]
+     837/    BA1B : 88 46 FD            	mov	byte ptr [bp-3],al
+     838/    BA1E : 8D 46 FE            	lea	ax,word ptr [bp-2]
+     839/    BA21 : 50                  	push	ax
+     840/    BA22 : FF 76 04            	push	word ptr [bp+4]
+     841/    BA25 : E8 4E FF            	call	factr
+     842/    BA28 : 59                  	pop	cx
+     843/    BA29 : 59                  	pop	cx
+     844/    BA2A : 80 7E FD 2A         	cmp	byte ptr [bp-3],42
+     845/    BA2E : 75 09               	jne	L_97
+     846/    BA30 :                     
+     847/    BA30 : 8B 04               	mov	ax,word ptr [si]
+     848/    BA32 : F7 66 FE            	mul	word ptr [bp-2]
+     849/    BA35 : 89 04               	mov	word ptr [si],ax
+     850/    BA37 : EB 76               	jmp	L_98
+     851/    BA39 :                     
+     852/    BA39 :                     L_97:
+     853/    BA39 : 80 7E FD 2B         	cmp	byte ptr [bp-3],43
+     854/    BA3D : 75 07               	jne	L_99
+     855/    BA3F :                     
+     856/    BA3F : 8B 46 FE            	mov	ax,word ptr [bp-2]
+     857/    BA42 : 01 04               	add	word ptr [si],ax
+     858/    BA44 : EB 69               	jmp	L_100
+     859/    BA46 :                     
+     860/    BA46 :                     L_99:
+     861/    BA46 : 80 7E FD 2D         	cmp	byte ptr [bp-3],45
+     862/    BA4A : 75 07               	jne	L_101
+     863/    BA4C :                     
+     864/    BA4C : 8B 46 FE            	mov	ax,word ptr [bp-2]
+     865/    BA4F : 29 04               	sub	word ptr [si],ax
+     866/    BA51 : EB 5C               	jmp	L_102
+     867/    BA53 :                     
+     868/    BA53 :                     L_101:
+     869/    BA53 : 80 7E FD 2F         	cmp	byte ptr [bp-3],47
+     870/    BA57 : 75 16               	jne	L_103
+     871/    BA59 :                     
+     872/    BA59 : 8B 04               	mov	ax,word ptr [si]
+     873/    BA5B : 33 D2               	xor	dx,dx
+     874/    BA5D : F7 76 FE            	div	word ptr [bp-2]
+     875/    BA60 : 89 16 54 07         	mov	word ptr _Lct+78,dx
+     876/    BA64 : 8B 04               	mov	ax,word ptr [si]
+     877/    BA66 : 33 D2               	xor	dx,dx
+     878/    BA68 : F7 76 FE            	div	word ptr [bp-2]
+     879/    BA6B : 89 04               	mov	word ptr [si],ax
+     880/    BA6D : EB 40               	jmp	L_104
+     881/    BA6F :                     
+     882/    BA6F :                     L_103:
+     883/    BA6F : 80 7E FD 3D         	cmp	byte ptr [bp-3],61
+     884/    BA73 : 75 12               	jne	L_105
+     885/    BA75 :                     
+     886/    BA75 : 8B 04               	mov	ax,word ptr [si]
+     887/    BA77 : 3B 46 FE            	cmp	ax,word ptr [bp-2]
+     888/    BA7A : 75 05               	jne	L_110
+     889/    BA7C : B8 01 00            	mov	ax,1
+     890/    BA7F : EB 02               	jmp	L_109
+     891/    BA81 :                     
+     892/    BA81 :                     L_110:
+     893/    BA81 : 33 C0               	xor	ax,ax
+     894/    BA83 :                     L_109:
+     895/    BA83 : 89 04               	mov	word ptr [si],ax
+     896/    BA85 : EB 28               	jmp	L_106
+     897/    BA87 :                     
+     898/    BA87 :                     L_105:
+     899/    BA87 : 80 7E FD 3E         	cmp	byte ptr [bp-3],62
+     900/    BA8B : 75 12               	jne	L_107
+     901/    BA8D :                     
+     902/    BA8D : 8B 04               	mov	ax,word ptr [si]
+     903/    BA8F : 3B 46 FE            	cmp	ax,word ptr [bp-2]
+     904/    BA92 : 72 05               	jb	L_112
+     905/    BA94 : B8 01 00            	mov	ax,1
+     906/    BA97 : EB 02               	jmp	L_111
+     907/    BA99 :                     
+     908/    BA99 :                     L_112:
+     909/    BA99 : 33 C0               	xor	ax,ax
+     910/    BA9B :                     L_111:
+     911/    BA9B : 89 04               	mov	word ptr [si],ax
+     912/    BA9D : EB 10               	jmp	L_108
+     913/    BA9F :                     
+     914/    BA9F :                     L_107:
+     915/    BA9F : 8B 04               	mov	ax,word ptr [si]
+     916/    BAA1 : 3B 46 FE            	cmp	ax,word ptr [bp-2]
+     917/    BAA4 : 73 05               	jae	L_114
+     918/    BAA6 : B8 01 00            	mov	ax,1
+     919/    BAA9 : EB 02               	jmp	L_113
+     920/    BAAB :                     L_114:
+     921/    BAAB : 33 C0               	xor	ax,ax
+     922/    BAAD :                     L_113:
+     923/    BAAD : 89 04               	mov	word ptr [si],ax
+     924/    BAAF :                     L_108:
+     925/    BAAF :                     L_106:
+     926/    BAAF :                     L_104:
+     927/    BAAF :                     L_102:
+     928/    BAAF :                     L_100:
+     929/    BAAF :                     L_98:
+     930/    BAAF : 5E                  	pop	si
+     931/    BAB0 : 8B E5               	mov	sp,bp
+     932/    BAB2 : 5D                  	pop	bp
+     933/    BAB3 : C3                  	ret	
+     934/    BAB4 :                     
+     935/    BAB4 :                     getvr:
+     936/    BAB4 : 55                  	push	bp
+     937/    BAB5 : 8B EC               	mov	bp,sp
+     938/    BAB7 : 83 EC 02            	sub	sp,2
+     939/    BABA : 56                  	push	si
+     940/    BABB : 8B 76 06            	mov	si, [bp+6]
+     941/    BABE :                     
+     942/    BABE : 8B 5E 04            	mov	bx, [bp+4]
+     943/    BAC1 : 8B 07               	mov	ax, [bx]
+     944/    BAC3 : FF 07               	inc	word ptr [bx]
+     945/    BAC5 : 8B D8               	mov	bx, ax
+     946/    BAC7 : 8A 87 06 07         	mov	al, [bx+_Lct]
+     947/    BACB : 88 04               	mov	[si], al
+     948/    BACD :                     
+     949/    BACD : 80 3C 3A            	cmp	byte ptr [si], 58
+     950/    BAD0 : 75 1C               	jne	gv_120
+     951/    BAD2 :                     
+     952/    BAD2 : 8D 46 FE            	lea	ax, [bp-2]
+     953/    BAD5 : 50                  	push	ax
+     954/    BAD6 : FF 76 04            	push	word ptr [bp+4]
+     955/    BAD9 : E8 62 FE            	call	expr
+     956/    BADC : 59                  	pop	cx
+     957/    BADD : 59                  	pop	cx
+     958/    BADE :                     
+     959/    BADE : 8B 46 FE            	mov	ax, [bp-2]
+     960/    BAE1 : D1 E0               	shl	ax, 1
+     961/    BAE3 : 03 06 56 07         	add	ax, [_Lct+80]
+     962/    BAE7 : 8B 5E 08            	mov	bx, [bp+8]
+     963/    BAEA : 89 07               	mov	[bx], ax
+     964/    BAEC : EB 18               	jmp	gv_121
+     965/    BAEE :                     
+     966/    BAEE :                     gv_120:
+     967/    BAEE : 80 3C 7F            	cmp	byte ptr [si], 7fh
+     968/    BAF1 : 75 03               	jne	gv_122
+     969/    BAF3 : E9 86 FA            	jmp	_mach_fin
+     970/    BAF6 :                     
+     971/    BAF6 :                     gv_122:
+     972/    BAF6 : 8A 04               	mov	al, [si]
+     973/    BAF8 : B4 00               	mov	ah, 0
+     974/    BAFA : 25 3F 00            	and	ax, 63
+     975/    BAFD : 40                  	inc	ax
+     976/    BAFE : 40                  	inc	ax
+     977/    BAFF : D1 E0               	shl	ax, 1
+     978/    BB01 : 8B 5E 08            	mov	bx, [bp+8]
+     979/    BB04 : 89 07               	mov	[bx], ax
+     980/    BB06 :                     
+     981/    BB06 :                     gv_121:
+     982/    BB06 : 5E                  	pop	si
+     983/    BB07 : 8B E5               	mov	sp,bp
+     984/    BB09 : 5D                  	pop	bp
+     985/    BB0A : C3                  	ret	
+     986/    BB0B :                     
+     987/    BB0B :                     putl:
+     988/    BB0B : 55                  	push	bp
+     989/    BB0C : 8B EC               	mov	bp,sp
+     990/    BB0E : 56                  	push	si
+     991/    BB0F : 8B 76 04            	mov	si,word ptr [bp+4]
+     992/    BB12 :                     L_121:
+     993/    BB12 : 8B 1C               	mov	bx,word ptr [si]
+     994/    BB14 : 8A 87 06 07         	mov	al, [bx+_Lct]
+     995/    BB18 : 3A 46 06            	cmp	al,byte ptr [bp+6]
+     996/    BB1B : 74 07               	je	L_120
+     997/    BB1D : E8 3D FA            	call	_putchr
+     998/    BB20 : FF 04               	inc	word ptr [si]
+     999/    BB22 : EB EE               	jmp	L_121
+    1000/    BB24 :                     
+    1001/    BB24 :                     L_120:
+    1002/    BB24 : FF 04               	inc	word ptr [si]
+    1003/    BB26 : 5E                  	pop	si
+    1004/    BB27 : 5D                  	pop	bp
+    1005/    BB28 : C3                  	ret	
+    1006/    BB29 :                     
+    1007/    BB29 :                     crlf:
+    1008/    BB29 : B0 0D               	mov	al,13
+    1009/    BB2B : E8 2F FA            	call	_putchr
+    1010/    BB2E : B0 0A               	mov	al,10
+    1011/    BB30 : E8 2A FA            	call	_putchr
+    1012/    BB33 : C3                  	ret	
+    1013/    BB34 :                     
+    1014/    BB34 :                     putnm:
+    1015/    BB34 : 55                  	push	bp
+    1016/    BB35 : 8B EC               	mov	bp,sp
+    1017/    BB37 : 83 EC 04            	sub	sp,4
+    1018/    BB3A : C7 46 FC 87 00      	mov	word ptr [bp-4],135
+    1019/    BB3F : 8B 5E FC            	mov	bx,word ptr [bp-4]
+    1020/    BB42 : C6 87 06 07 00      	mov	byte ptr _Lct[bx],0
+    1021/    BB47 :                     L_126:
+    1022/    BB47 : 8B 46 04            	mov	ax,word ptr [bp+4]
+    1023/    BB4A : BB 0A 00            	mov	bx,10
+    1024/    BB4D : 33 D2               	xor	dx,dx
+    1025/    BB4F : F7 F3               	div	bx
+    1026/    BB51 : 88 56 FF            	mov	byte ptr [bp-1],dl
+    1027/    BB54 : 8B 46 04            	mov	ax,word ptr [bp+4]
+    1028/    BB57 : BB 0A 00            	mov	bx,10
+    1029/    BB5A : 33 D2               	xor	dx,dx
+    1030/    BB5C : F7 F3               	div	bx
+    1031/    BB5E : 89 46 04            	mov	word ptr [bp+4],ax
+    1032/    BB61 : FF 4E FC            	dec	word ptr [bp-4]
+    1033/    BB64 : 8A 46 FF            	mov	al,byte ptr [bp-1]
+    1034/    BB67 : 04 30               	add	al,48
+    1035/    BB69 : 8B 5E FC            	mov	bx,word ptr [bp-4]
+    1036/    BB6C : 88 87 06 07         	mov	byte ptr _Lct[bx],al
+    1037/    BB70 : 83 7E 04 00         	cmp	word ptr [bp+4],0
+    1038/    BB74 : 75 D1               	jne	L_126
+    1039/    BB76 :                     
+    1040/    BB76 : B0 00               	mov	al,0
+    1041/    BB78 : 50                  	push	ax
+    1042/    BB79 : 8D 46 FC            	lea	ax,word ptr [bp-4]
+    1043/    BB7C : 50                  	push	ax
+    1044/    BB7D : E8 8B FF            	call	putl
+    1045/    BB80 : 59                  	pop	cx
+    1046/    BB81 : 59                  	pop	cx
+    1047/    BB82 : 8B E5               	mov	sp,bp
+    1048/    BB84 : 5D                  	pop	bp
+    1049/    BB85 : C3                  	ret	
+    1050/    BB86 :                     
+    1051/    BB86 :                     putstr:
+    1052/    BB86 : 55                  	push	bp
+    1053/    BB87 : 8B EC               	mov	bp,sp
+    1054/    BB89 : EB 0B               	jmp	L_129
+    1055/    BB8B :                     
+    1056/    BB8B :                     L_131:
+    1057/    BB8B : 8B 5E 04            	mov	bx,word ptr [bp+4]
+    1058/    BB8E : FF 46 04            	inc	word ptr [bp+4]
+    1059/    BB91 : 8A 07               	mov	al, [bx]
+    1060/    BB93 : E8 C7 F9            	call	_putchr
+    1061/    BB96 :                     L_129:
+    1062/    BB96 : 8B 5E 04            	mov	bx,word ptr [bp+4]
+    1063/    BB99 : 80 3F 00            	cmp	byte ptr [bx],0
+    1064/    BB9C : 75 ED               	jne	L_131
+    1065/    BB9E :                     
+    1066/    BB9E : E8 88 FF            	call	crlf
+    1067/    BBA1 : 5D                  	pop	bp
+    1068/    BBA2 : C3                  	ret	
+    1069/    BBA3 :                     
+    1070/    BBA3 : E9 60 F9            CSTART:	jmp	start_tb
+    1071/    BBA6 : E9 9C F9            WSTART:	jmp	_warm_boot
+    1072/    BBA9 :                     
+    1073/    BBA9 : 56 54 4C 2D 43 20   opmsg:	db	"VTL-C SBCV20/8088 edition.",0
+             BBAF : 53 42 43 56 32 30 
+             BBB5 : 2F 38 30 38 38 20 
+             BBBB : 65 64 69 74 69 6F 
+             BBC1 : 6E 2E 00          
+    1074/    BBC4 : 0D 0A 4F 4B 00      okm:	db	"\r\nOK",0
+    1075/    BBC9 :                     
+    1076/    BBC9 : FF FF FF FF FF FF   	db	($ & 0FF00H)+100H-$ dup(0FFH)
+             BBCF : FF FF FF FF FF FF 
+             BBD5 : FF FF FF FF FF FF 
+             BBDB : FF FF FF FF FF FF 
+             BBE1 : FF FF FF FF FF FF 
+             BBE7 : FF FF FF FF FF FF 
+             BBED : FF FF FF FF FF FF 
+             BBF3 : FF FF FF FF FF FF 
+             BBF9 : FF FF FF FF FF FF 
+             BBFF : FF                
+    1077/    BC00 :                     
+    1078/    BC00 :                     CODE_END:
+    1079/    BC00 :                     
+    1080/       0 :                     	SEGMENT	DATA
+    1081/     700 :                     	org	TB_WORK
+    1082/     700 :                     
+    1083/     700 :                     SEED:		ds	2
+    1084/     702 :                     SEEDX:		ds	2
+    1085/     704 :                     s_val:		ds	2
+    1086/     706 :                     _Lct:		ds	RAM_END+1 - _Lct
+    1087/    8000 :                     
+    1088/    8000 : =78FAH               work_size	equ	RAM_END+1 - _Lct
+    1089/    8000 :                     	end
+ AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 2 - 3/4/2023 17:22:42
+
+
+  Symbol Table (* = unused):
+  --------------------------
+
+*ARCHITECTURE :                                        "i386-unknown-win32" - |
+ BR2 :                        0B5D8 C | *CASESENSITIVE :                  0 - |
+*CODE_END :                   0BC00 C | *COMPMODE :                       0 - |
+*CONSTPI :        3.141592653589793 - |  CRLF :                       0BB29 C |
+ CSTART :                     0BBA3 C | *DATE :                  "3/4/2023" - |
+ DEBUG :                          0 - |  DT_SEG :                         0 - |
+ EXPR :                       0B93E C |  FACTR :                      0B976 C |
+*FALSE :                          0 - |  FNDLN :                      0B7AA C |
+*FULLPMMU :                       1 - |  GETLN :                      0B7F6 C |
+ GETNM :                      0B856 C |  GETVR :                      0BAB4 C |
+ GV_120 :                     0BAEE C |  GV_121 :                     0BB06 C |
+ GV_122 :                     0BAF6 C | *HAS64 :                          0 - |
+*HASFPU :                         0 - | *HASPMMU :                        0 - |
+*INSUPMODE :                      0 - | *LISTON :                         1 - |
+ L_10 :                       0B64B C |  L_100 :                      0BAAF C |
+ L_101 :                      0BA53 C |  L_102 :                      0BAAF C |
+ L_103 :                      0BA6F C |  L_104 :                      0BAAF C |
+ L_105 :                      0BA87 C |  L_106 :                      0BAAF C |
+ L_107 :                      0BA9F C |  L_108 :                      0BAAF C |
+ L_109 :                      0BA83 C |  L_110 :                      0BA81 C |
+ L_111 :                      0BA9B C |  L_112 :                      0BA99 C |
+ L_113 :                      0BAAD C |  L_114 :                      0BAAB C |
+ L_120 :                      0BB24 C |  L_121 :                      0BB12 C |
+ L_126 :                      0BB47 C |  L_129 :                      0BB96 C |
+ L_13 :                       0B678 C |  L_131 :                      0BB8B C |
+ L_15 :                       0B723 C |  L_16 :                       0B6C6 C |
+ L_19 :                       0B69A C |  L_20 :                       0B6BA C |
+ L_22 :                       0B719 C |  L_25 :                       0B6F6 C |
+ L_26 :                       0B70A C |  L_27 :                       0B726 C |
+ L_30 :                       0B733 C |  L_31 :                       0B739 C |
+ L_35 :                       0B763 C |  L_36 :                       0B777 C |
+ L_39 :                       0B78F C |  L_41 :                       0B7DA C |
+ L_44 :                       0B7B7 C |  L_45 :                       0B7CF C |
+ L_46 :                       0B7C7 C |  L_5 :                        0B68D C |
+ L_50 :                       0B7E4 C |  L_52 :                       0B851 C |
+ L_55 :                       0B7FF C |  L_56 :                       0B810 C |
+ L_59 :                       0B827 C |  L_61 :                       0B83C C |
+ L_62 :                       0B835 C |  L_66 :                       0B894 C |
+ L_70 :                       0B86F C |  L_73 :                       0B8AF C |
+ L_75 :                       0B8F5 C |  L_77 :                       0B93A C |
+ L_78 :                       0B910 C |  L_8 :                        0B631 C |
+ L_80 :                       0B924 C |  L_83 :                       0B95C C |
+ L_85 :                       0B953 C |  L_86 :                       0B96F C |
+ L_87 :                       0B9FE C |  L_88 :                       0B992 C |
+ L_89 :                       0B99F C |  L_9 :                        0B661 C |
+ L_90 :                       0B9C7 C |  L_92 :                       0B9D7 C |
+ L_94 :                       0B9E4 C |  L_97 :                       0BA39 C |
+ L_98 :                       0BAAF C |  L_99 :                       0BA46 C |
+*MACEXP :                         7 - |  MEM_CLEAR :                  0B518 C |
+*MOMCPU :                      8086 - | *MOMCPUNAME :                "8086" - |
+*NESTMAX :                      100 - |  NMSG_ :                      0B603 C |
+ NUM :                        0B898 C |  NXTLN :                      0B7DD C |
+ OKM :                        0BBC4 C |  OPMSG :                      0BBA9 C |
+ ORDR :                       0B8B3 C | *PADDING :                        1 - |
+ PUTL :                       0BB0B C |  PUTNM :                      0BB34 C |
+ PUTSTR :                     0BB86 C |  RAM_END :                     7FFF - |
+*RELAXED :                        0 - |  RND3 :                       0B59A C |
+ RND4 :                       0B5B5 C |  RND_BASE :                    8000 - |
+ RND_END :                     8A00 - |  SEED :                         700 D |
+ SEEDX :                        702 D |  START_TB :                   0B506 C |
+ S_VAL :                        704 D |  TB_OFF :                     0B500 - |
+ TB_STACK :                     700 - |  TB_WORK :                      700 - |
+ TERM :                       0BA04 C | *TIME :                  "17:22:42" - |
+*TRUE :                           1 - |  UPDATE_SEED :                0B529 C |
+*VERSION :                     142F - |  W1 :                         0B53E C |
+*WORK_SIZE :                   78FA - |  WSTART :                     0BBA6 C |
+ W_BOOT :                     0B5FB C |  _BREAKCHECK :                0B5C7 C |
+ _C_GETCH :                   0B564 C |  _C_KBHIT :                   0B56E C |
+ _GETCHR :                    0B575 C |  _LCT :                         706 D |
+ _MACH_FIN :                  0B57C C |  _MAIN :                      0B5D9 C |
+ _PUTCHR :                    0B55D C |  _RAND :                      0B58E C |
+ _SRAND :                     0B580 C |  _WARM_BOOT :                 0B545 C |
+
+    143 symbols
+     23 unused symbols
+
+ AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 3 - 3/4/2023 17:22:42
+
+
+  Code Pages:
+  ----------
+
+STANDARD (0 changed characters)
+
+1 code page
+
+0.02 seconds assembly time
+
+   1090 lines source file
+      3 passes
+      0 errors
+      0 warnings
