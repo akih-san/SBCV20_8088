@@ -8,7 +8,7 @@
 */
 
 
-#define MEMSIZE (0x5FF0)	/*ターゲットに配置し確定後に、再設定する*/
+#define MEMSIZE (0x7800)	/*ターゲットに配置し確定後に、再設定する*/
 #define READB(adrs) (*(Lct + (adrs)))
 #define WRITEB(adrs, data) (*(Lct + (adrs)) = (data))
 
@@ -71,7 +71,7 @@ int main(void) {
 	 unsigned short n;
 
 	/* initialize '*' and '&' */
-	WRITEW(Lmt, MEMSIZE);	/* RAM End */
+	WRITEW(Lmt, 0x7fff);	/* RAM End */
 	WRITEW(Bnd, Obj);		/* Program End */
 
 	srand(1458); /* for RND function */

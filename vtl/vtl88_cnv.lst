@@ -1,4 +1,4 @@
- AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 1 - 3/4/2023 17:22:42
+ AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 1 - 3/5/2023 14:41:32
 
 
        1/       0 :                     	page 0
@@ -219,7 +219,7 @@
      216/    B5DC : 83 EC 0E            	sub	sp,14
      217/    B5DF :                     
      218/    B5DF :                     	; init * and &
-     219/    B5DF : C7 06 5E 07 F0 5F   	mov	word ptr _Lct+88, 5FF0h	; *=$5FF0
+     219/    B5DF : C7 06 5E 07 FF 7F   	mov	word ptr _Lct+88, 7fffh	; *=$7fff
      220/    B5E5 : C7 06 56 07 08 01   	mov	word ptr _Lct+80, 264	; &=264
      221/    B5EB :                     
      222/    B5EB : B8 B2 05            	mov	ax,1458
@@ -1103,7 +1103,7 @@
     1087/    8000 :                     
     1088/    8000 : =78FAH               work_size	equ	RAM_END+1 - _Lct
     1089/    8000 :                     	end
- AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 2 - 3/4/2023 17:22:42
+ AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 2 - 3/5/2023 14:41:32
 
 
   Symbol Table (* = unused):
@@ -1113,7 +1113,7 @@
  BR2 :                        0B5D8 C | *CASESENSITIVE :                  0 - |
 *CODE_END :                   0BC00 C | *COMPMODE :                       0 - |
 *CONSTPI :        3.141592653589793 - |  CRLF :                       0BB29 C |
- CSTART :                     0BBA3 C | *DATE :                  "3/4/2023" - |
+ CSTART :                     0BBA3 C | *DATE :                  "3/5/2023" - |
  DEBUG :                          0 - |  DT_SEG :                         0 - |
  EXPR :                       0B93E C |  FACTR :                      0B976 C |
 *FALSE :                          0 - |  FNDLN :                      0B7AA C |
@@ -1171,7 +1171,7 @@
  SEEDX :                        702 D |  START_TB :                   0B506 C |
  S_VAL :                        704 D |  TB_OFF :                     0B500 - |
  TB_STACK :                     700 - |  TB_WORK :                      700 - |
- TERM :                       0BA04 C | *TIME :                  "17:22:42" - |
+ TERM :                       0BA04 C | *TIME :                  "14:41:32" - |
 *TRUE :                           1 - |  UPDATE_SEED :                0B529 C |
 *VERSION :                     142F - |  W1 :                         0B53E C |
 *WORK_SIZE :                   78FA - |  WSTART :                     0BBA6 C |
@@ -1185,7 +1185,7 @@
     143 symbols
      23 unused symbols
 
- AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 3 - 3/4/2023 17:22:42
+ AS V1.42 Beta [Bld 227] - Source File vtl88_cnv.asm - Page 3 - 3/5/2023 14:41:32
 
 
   Code Pages:

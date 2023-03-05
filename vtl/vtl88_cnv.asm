@@ -216,7 +216,7 @@ _main:
 	sub	sp,14
 
 	; init * and &
-	mov	word ptr _Lct+88, 5FF0h	; *=$5FF0
+	mov	word ptr _Lct+88, 7fffh	; *=$7fff
 	mov	word ptr _Lct+80, 264	; &=264
 
 	mov	ax,1458

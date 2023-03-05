@@ -2,7 +2,7 @@
 ?debug	macro
 	endm
 	endif
-	?debug	S ".\vtl88.c"
+	?debug	S "vtl88.c"
 _TEXT	segment	byte public 'CODE'
 DGROUP	group	_DATA,_BSS
 	assume	cs:_TEXT,ds:DGROUP,ss:DGROUP
@@ -14,7 +14,7 @@ _DATA	ends
 _BSS	segment word public 'BSS'
 b@	label	byte
 b@w	label	word
-	?debug	C E9AB866456092E5C76746C38382E63
+	?debug	C E9187565560776746C38382E63
 _BSS	ends
 _TEXT	segment	byte public 'CODE'
 ;	?debug	L 59
@@ -51,7 +51,7 @@ _main	proc	near
 	mov	bp,sp
 	sub	sp,14
 ;	?debug	L 74
-	mov	word ptr DGROUP:_Lct+88,24560
+	mov	word ptr DGROUP:_Lct+88,32767
 ;	?debug	L 75
 	mov	word ptr DGROUP:_Lct+80,264
 ;	?debug	L 77
@@ -1057,7 +1057,7 @@ putstr	endp
 _TEXT	ends
 _BSS	segment word public 'BSS'
 _Lct	label	byte
-	db	24560 dup (?)
+	db	30720 dup (?)
 _BSS	ends
 	?debug	C E9
 _DATA	segment word public 'DATA'
