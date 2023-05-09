@@ -101,7 +101,3 @@ http://middleriver.chagasi.com/electronics/vtl.html<br>
 ・超ミニ言語で遊ぼう（４）みんなで「スタ☆トレ」<br>
 https://ameblo.jp/siropyon/entry-11917965564.html<br>
 <br>
-<br>
-ソースコードは、ライセンスフリーです。<br>
-オリジナルのソースコードについては、公開元のライセンスアグリーメントに従うものと<br>
-します。<br>
